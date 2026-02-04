@@ -14,6 +14,7 @@ import {
   Activity,
   Waves,
   Scale,
+  ClipboardList,
 } from "lucide-react";
 
 const routes = [
@@ -64,6 +65,12 @@ const routes = [
     icon: TableProperties,
     href: "/matriz",
     color: "text-pink-700",
+  },
+  {
+    label: "Planos de Ação",
+    icon: ClipboardList,
+    href: "/planos",
+    color: "text-emerald-600",
   },
   {
     label: "Prognóstico",
