@@ -27,6 +27,7 @@ export default function IndicadoresPage() {
 
   const [chartData, setChartData] = useState<RadarItem[]>([]);
   const [consolidated, setConsolidated] = useState<any>(null);
+  const [totalActions, setTotalActions] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +51,14 @@ export default function IndicadoresPage() {
 
         setChartData(formattedRadar);
 
-        // 2. Salvar dados consolidados (Total de Ações, Índice Global, etc)
+        // 2. Calcula o total de ações somando todos os valores do radar
+        const total = Object.values(radarRes || {}).reduce(
+          (acc: number, val) => acc + (Number(val) || 0),
+          0,
+        );
+        setTotalActions(total);
+
+        // 3. Salvar dados consolidados (Índice Global, etc)
         setConsolidated(consolidatedRes);
       } catch (error) {
         console.error("Erro ao carregar indicadores:", error);
@@ -138,10 +146,10 @@ export default function IndicadoresPage() {
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-violet-200">
                 <div>
                   <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-1">
-                    Total de Ações
+                    Total de Iniciativas
                   </p>
                   <p className="text-2xl font-mono font-bold text-violet-600">
-                    {consolidated?.total_actions || 0}
+                    {totalActions}
                   </p>
                 </div>
                 <div>

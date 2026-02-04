@@ -32,6 +32,22 @@ import {
   Tag,
 } from "lucide-react";
 
+const PRAZOS = {
+  curto: { inicio: 2024, fim: 2033 },
+  medio: { inicio: 2034, fim: 2043 },
+  longo: { inicio: 2044, fim: 2053 },
+};
+
+// Verifica se um intervalo de anos intercepta outro
+const intersects = (
+  start: number,
+  end: number,
+  rangeStart: number,
+  rangeEnd: number,
+) => {
+  return end >= rangeStart && start <= rangeEnd;
+};
+
 export default function PlanosAcaoPage() {
   const searchParams = useSearchParams();
   const basinId = searchParams.get("basin_id") || "1";
@@ -39,26 +55,22 @@ export default function PlanosAcaoPage() {
   const [actions, setActions] = useState<any[]>([]);
   const [filtersData, setFiltersData] = useState<any>({
     eixos: [],
-    programas: [], // Mantido caso precise no futuro, mas não usado no filtro
+    programas: [],
     tipologias: [],
   });
   const [loading, setLoading] = useState(true);
 
-  // Estados dos Filtros selecionados
-  // REMOVIDO: selectedProg
+  // Estados dos Filtros
   const [selectedEixo, setSelectedEixo] = useState("todos");
   const [selectedTipo, setSelectedTipo] = useState("todos");
-  const [selectedCrono, setSelectedCrono] = useState("todos"); // Novo foco
+  const [selectedCrono, setSelectedCrono] = useState("todos");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Helpers para lógica de datas
-  const isCurtoPrazo = (year: number) => year <= 2033;
-  const isMedioPrazo = (year: number) => year > 2033 && year <= 2043;
-  const isLongoPrazo = (year: number) => year > 2043;
+  // Helpers de Data
+  // --- Definição oficial dos prazos ---
 
-  // Busca dados da API e aplica filtros locais
   useEffect(() => {
     async function loadInitialData() {
       setLoading(true);
@@ -66,15 +78,11 @@ export default function PlanosAcaoPage() {
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
       try {
-        // 1. Busca os Filtros dinâmicos (para preencher os combos de Eixo e Tipologia)
         const filtersRes = await axios.get(
           `${baseUrl}/actions/filters?basin_id=${basinId}`,
         );
         setFiltersData(filtersRes.data);
 
-        // 2. Busca as Ações da API
-        // Passamos apenas Eixo e Tipologia para a API filtrar (se o backend suportar).
-        // Removemos 'programa' pois foi substituído na tela.
         const actionsData = await getActions(Number(basinId), {
           eixo: selectedEixo === "todos" ? "" : selectedEixo,
           tipologia: selectedTipo === "todos" ? "" : selectedTipo,
@@ -84,16 +92,38 @@ export default function PlanosAcaoPage() {
           ? actionsData
           : (actionsData as any).data || [];
 
-        // 3. Aplicação do Filtro de Cronograma no Front-end
-        // Filtramos a lista recebida baseada no ano de início (start_year)
         const filteredList = rawList.filter((item: any) => {
           if (selectedCrono === "todos") return true;
 
           const start = item.start_year || 0;
+          const end = item.end_year || start;
 
-          if (selectedCrono === "Curto Prazo") return isCurtoPrazo(start);
-          if (selectedCrono === "Médio Prazo") return isMedioPrazo(start);
-          if (selectedCrono === "Longo Prazo") return isLongoPrazo(start);
+          if (selectedCrono === "Curto Prazo") {
+            return intersects(
+              start,
+              end,
+              PRAZOS.curto.inicio,
+              PRAZOS.curto.fim,
+            );
+          }
+
+          if (selectedCrono === "Médio Prazo") {
+            return intersects(
+              start,
+              end,
+              PRAZOS.medio.inicio,
+              PRAZOS.medio.fim,
+            );
+          }
+
+          if (selectedCrono === "Longo Prazo") {
+            return intersects(
+              start,
+              end,
+              PRAZOS.longo.inicio,
+              PRAZOS.longo.fim,
+            );
+          }
 
           return true;
         });
@@ -106,17 +136,26 @@ export default function PlanosAcaoPage() {
       }
     }
     loadInitialData();
-  }, [basinId, selectedEixo, selectedTipo, selectedCrono]); // Dependências atualizadas
+  }, [basinId, selectedEixo, selectedTipo, selectedCrono]);
 
-  // Regra de negócio para converter anos em Prazos (Labels visuais)
-  const getTimelineLabel = (start: number) => {
+  const getTimelineLabel = (start: number, end: number) => {
     if (!start) return "N/A";
-    if (start <= 2033) return "Curto Prazo";
-    if (start <= 2043) return "Médio Prazo";
-    return "Longo Prazo";
+
+    const labels: string[] = [];
+
+    if (intersects(start, end, PRAZOS.curto.inicio, PRAZOS.curto.fim)) {
+      labels.push("Curto");
+    }
+    if (intersects(start, end, PRAZOS.medio.inicio, PRAZOS.medio.fim)) {
+      labels.push("Médio");
+    }
+    if (intersects(start, end, PRAZOS.longo.inicio, PRAZOS.longo.fim)) {
+      labels.push("Longo");
+    }
+
+    return labels.length ? `${labels.join(" / ")} Prazo` : "N/A";
   };
 
-  // Formatação de custo com Unidade
   const formatBudgetWithUnit = (item: any) => {
     const value = Number(item.total_budget || 0);
     const unit = item.budget_unit || "Global";
@@ -131,7 +170,6 @@ export default function PlanosAcaoPage() {
       : `${formatted} / ${unit.toLowerCase()}`;
   };
 
-  // Paginação
   const totalPages = Math.ceil(actions.length / itemsPerPage);
   const currentItems = actions.slice(
     (currentPage - 1) * itemsPerPage,
@@ -163,27 +201,39 @@ export default function PlanosAcaoPage() {
   return (
     <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
       <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
-        <header className="mb-20 space-y-10 text-center md:text-left">
+        {/* HEADER ATUALIZADO COM O NOVO TEXTO E LAYOUT EM GRID */}
+        <header className="mb-16 space-y-8">
           <Badge
             variant="outline"
             className="rounded-full border-blue-100 text-blue-600 bg-blue-50/50 px-4 py-1"
           >
             <TrendingUp className="w-3 h-3 mr-2" /> Portfólio de Investimentos
           </Badge>
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-none">
-              Plano de Ações
-            </h1>
-            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-400">
-              <MapPin className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-medium italic">
-                {getBasinName(basinId)}
-              </span>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-end">
+            <div className="space-y-4">
+              <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-none">
+                Plano de Ações
+              </h1>
+              <div className="flex items-center gap-2 text-slate-400">
+                <MapPin className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium italic">
+                  {getBasinName(basinId)}
+                </span>
+              </div>
             </div>
+
+            <p className="text-slate-600 text-sm leading-relaxed text-justify lg:max-w-xl">
+              Planos de Ação e Previsões de Investimentos estabelecem diretrizes
+              para a implementação das iniciativas na região, garantindo a
+              execução eficiente das estratégias propostas. Esses planos definem
+              prazos, responsabilidades e fontes de financiamento para ações
+              prioritárias, assegurando o uso sustentável dos recursos hídricos.
+            </p>
           </div>
         </header>
 
-        {/* Filtros Ajustados */}
+        {/* Filtros */}
         <section className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-wrap items-end gap-6">
           {/* Filtro: Eixo */}
           <div className="space-y-1.5 w-55">
@@ -237,7 +287,7 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          {/* Filtro: Cronograma (Substituindo Programa) */}
+          {/* Filtro: Cronograma */}
           <div className="space-y-1.5 flex-1 min-w-50">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Cronograma (Prazo)
@@ -273,7 +323,7 @@ export default function PlanosAcaoPage() {
             onClick={() => {
               setSelectedEixo("todos");
               setSelectedTipo("todos");
-              setSelectedCrono("todos"); // Reseta o cronograma
+              setSelectedCrono("todos");
             }}
             className="text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase ml-auto"
           >
@@ -284,7 +334,7 @@ export default function PlanosAcaoPage() {
         {/* Tabela de Resultados */}
         <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="w-full table-fixed min-w-[1200px]">
+            <Table className="w-full table-fixed min-w-300">
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="border-slate-200">
                   <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
@@ -312,11 +362,10 @@ export default function PlanosAcaoPage() {
                       className="border-slate-100 hover:bg-blue-50/30 transition-colors"
                     >
                       <TableCell className="px-6 py-6 align-top">
-                        {/* Exibição do Eixo (campo virtual axis_name) e Programa */}
                         <div className="text-[9px] font-black text-blue-600 uppercase tracking-wider mb-1">
                           {item.axis_name || "Eixo não definido"}
                         </div>
-                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal break-words mb-2">
+                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal wrap-break-words mb-2">
                           {item.program?.name || "Programa não definido"}
                         </div>
                         <div className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter border border-slate-200 px-1.5 py-0.5 rounded">
@@ -325,13 +374,13 @@ export default function PlanosAcaoPage() {
                       </TableCell>
 
                       <TableCell className="px-6 py-6 align-top">
-                        <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-normal break-words">
+                        <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-normal wrap-break-words">
                           {item.description}
                         </p>
                       </TableCell>
 
                       <TableCell className="px-6 py-6 align-top">
-                        <div className="flex items-start gap-2 text-[12px] font-medium text-slate-600 whitespace-normal break-words leading-snug">
+                        <div className="flex items-start gap-2 text-[12px] font-medium text-slate-600 whitespace-normal wrap-break-words leading-snug">
                           <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                           <span>{item.source || "Órgão a definir"}</span>
                         </div>
@@ -346,7 +395,7 @@ export default function PlanosAcaoPage() {
                           variant="secondary"
                           className="rounded-full bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-none px-3 mb-1"
                         >
-                          {getTimelineLabel(item.start_year)}
+                          {getTimelineLabel(item.start_year, item.end_year)}
                         </Badge>
                         <div className="text-[10px] text-slate-400 font-mono tracking-tighter">
                           {item.start_year} — {item.end_year}
@@ -398,7 +447,7 @@ export default function PlanosAcaoPage() {
           </div>
         </div>
 
-        {/* Totalizador Rodapé */}
+        {/* Rodapé Totalizador */}
         <footer className="mt-12 flex flex-col md:flex-row justify-between items-center bg-slate-900 rounded-2xl p-10 text-white">
           <div className="space-y-1">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">

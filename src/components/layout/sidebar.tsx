@@ -73,6 +73,18 @@ const routes = [
     color: "text-emerald-600",
   },
   {
+    label: "Monitoramento", // Adicionei a rota de monitoramento aqui se já existir no menu
+    icon: Activity, // Ou outro ícone como Target
+    href: "/monitoramento",
+    color: "text-green-500",
+  },
+  {
+    label: "Indicadores", // Mudou de Dashboard
+    icon: LayoutDashboard, // Pode manter ou usar PieChart/BarChart3
+    href: "/indicadores", // Apontando para a nova página
+    color: "text-violet-500", // Combinando com a cor da página nova
+  },
+  {
     label: "Prognóstico",
     icon: BarChart3,
     href: "/prognostico",
@@ -82,8 +94,8 @@ const routes = [
 
 interface SidebarProps {
   className?: string;
-  collapsed?: boolean; // Novo controle: está recolhida?
-  isMobile?: boolean; // Novo controle: é mobile?
+  collapsed?: boolean;
+  isMobile?: boolean;
 }
 
 export function Sidebar({
@@ -108,15 +120,21 @@ export function Sidebar({
             "flex items-center mb-14 transition-all",
             collapsed && !isMobile ? "justify-center pl-0" : "pl-3",
           )}
+          title="Sistema de Informações de Gestão de Recursos Hídricos" // Nome completo ao passar o mouse
         >
           <div className="relative h-8 w-8">
             <Droplets className="h-8 w-8 text-blue-400" />
           </div>
           {/* Esconde o texto se estiver colapsado (e não for mobile) */}
           {(!collapsed || isMobile) && (
-            <h1 className="text-2xl font-bold ml-4 whitespace-nowrap transition-opacity duration-300">
-              Hidro<span className="text-blue-400">Plan</span>
-            </h1>
+            <div className="flex flex-col ml-4 transition-opacity duration-300">
+              <h1 className="text-2xl font-bold whitespace-nowrap leading-none">
+                SIG<span className="text-blue-400">RH</span>
+              </h1>
+              <span className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mt-1">
+                Sistema de Informações de Gestão das Regiões Hidrográficas
+              </span>
+            </div>
           )}
         </Link>
 
@@ -131,9 +149,9 @@ export function Sidebar({
                 pathname === route.href
                   ? "text-white bg-white/10"
                   : "text-zinc-400",
-                collapsed && !isMobile ? "justify-center" : "justify-start", // Centraliza ícones no modo mini
+                collapsed && !isMobile ? "justify-center" : "justify-start",
               )}
-              title={collapsed ? route.label : undefined} // Tooltip nativo simples
+              title={collapsed ? route.label : undefined}
             >
               <div className="flex items-center">
                 <route.icon
