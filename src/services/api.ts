@@ -21,3 +21,10 @@ export async function getConsolidated(basinId = 1) {
   );
   return res.json();
 }
+
+export async function getSections(basinId = 1) {
+  const res = await fetch(`${API_URL}/content?basin_id=${basinId}`, {
+    cache: "no-store",
+  });
+  return res.json();
+}

@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
       <div className="space-y-4">
         {loading ? (
-          <div className="flex h-[400px] w-full items-center justify-center">
+          <div className="flex h-100 w-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
@@ -78,7 +78,7 @@ export default function DashboardPage() {
               <TypologyRadar data={radarData} />
 
               {/* Espaço para outro gráfico futuro (Ocupa 3 colunas) */}
-              <div className="col-span-3 rounded-xl border bg-card text-card-foreground shadow flex items-center justify-center text-muted-foreground">
+              <div className="col-span-3 rounded-xl border bg-card text-muted-foreground. shadow flex items-center justify-center text-muted-foreground">
                 Em breve: Gráfico de Evolução Temporal
               </div>
             </div>
