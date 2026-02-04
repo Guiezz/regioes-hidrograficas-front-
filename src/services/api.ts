@@ -2,25 +2,45 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface ActionPlan {
   id: number;
-  axis: string; // Eixo
-  description: string; // Ação Específica
-  typology: string; // Tipologia
-  source: string; // Fonte de Recursos
-  budget: number; // Previsão Orçamentária
-  timeline: string; // Cronograma (Curto, Médio, Longo)
+  description: string;
+  typology: string;
+  source: string;
+  budget: number;
+  // No backend o campo cost costuma ser 'budget' ou 'cost'
+  // Ajuste os nomes abaixo conforme o JSON real do seu Go
+  program?: {
+    name: string;
+    axis: {
+      name: string;
+    };
+  };
+  axis?: string; // Fallback para compatibilidade
+  timeline: string;
   basin_id: number;
 }
 
-export async function getActions(basinId = 1) {
+export async function getActions(
+  basinId = 1,
+  filters?: { eje?: string; tipo?: string },
+) {
   try {
-    const res = await fetch(`${API_URL}/actions?basin_id=${basinId}`, {
-      cache: "no-store",
-    });
+    // Construção dinâmica da URL com filtros para o Passo 3
+    let url = `${API_URL}/actions?basin_id=${basinId}`;
+    if (filters?.eje && filters.eje !== "todos")
+      url += `&eixo=${encodeURIComponent(filters.eje)}`;
+    if (filters?.tipo && filters.tipo !== "todos")
+      url += `&tipologia=${encodeURIComponent(filters.tipo)}`;
+
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Falha ao buscar ações");
-    return res.json();
+
+    const responseData = await res.json();
+
+    // Extraímos a lista da chave 'data' enviada pelo backend em Go
+    return responseData.data || [];
   } catch (error) {
-    console.warn("API de ações não disponível, usando dados de exemplo.");
-    return []; // Retorna vazio para cair no fallback do componente
+    console.warn("Erro ao buscar ações, retornando vazio:", error);
+    return [];
   }
 }
 

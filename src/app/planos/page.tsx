@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getActions, ActionPlan } from "@/services/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getActions } from "@/services/api"; // Certifique-se de ter a chamada para /filters no seu service
+import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,361 +23,313 @@ import {
 } from "@/components/ui/table";
 import {
   Loader2,
-  Target,
-  Filter,
-  Coins,
-  CalendarDays,
   X,
-  ArrowUpRight,
+  Coins,
+  MapPin,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Tag,
 } from "lucide-react";
 
 export default function PlanosAcaoPage() {
   const searchParams = useSearchParams();
   const basinId = searchParams.get("basin_id") || "1";
 
-  const [actions, setActions] = useState<ActionPlan[]>([]);
+  const [actions, setActions] = useState<any[]>([]);
+  const [filtersData, setFiltersData] = useState<any>({
+    eixos: [],
+    programas: [],
+    tipologias: [],
+  });
   const [loading, setLoading] = useState(true);
 
-  // Estados dos Filtros
-  const [filterEixo, setFilterEixo] = useState("todos");
-  const [filterTipologia, setFilterTipologia] = useState("todos");
-  const [filterCronograma, setFilterCronograma] = useState("todos");
+  // Estados dos Filtros selecionados
+  const [selectedEixo, setSelectedEixo] = useState("todos");
+  const [selectedTipo, setSelectedTipo] = useState("todos");
+  const [selectedCrono, setSelectedCrono] = useState("todos");
 
-  // Dados Mockados de Exemplo (Caso a API esteja vazia)
-  const mockActions: ActionPlan[] = [
-    {
-      id: 1,
-      basin_id: 1,
-      axis: "Gestão e Governança",
-      description: "Fortalecimento dos Comitês de Bacia",
-      typology: "Gestão",
-      source: "Tesouro Estadual",
-      budget: 150000,
-      timeline: "Curto Prazo",
-    },
-    {
-      id: 2,
-      basin_id: 1,
-      axis: "Infraestrutura",
-      description: "Recuperação da Barragem do Açude X",
-      typology: "Obra",
-      source: "Federal / OGU",
-      budget: 2500000,
-      timeline: "Médio Prazo",
-    },
-    {
-      id: 3,
-      basin_id: 1,
-      axis: "Meio Ambiente",
-      description: "Reflorestamento de mata ciliar no Rio Curu",
-      typology: "Conservação",
-      source: "Fundo Ambiental",
-      budget: 450000,
-      timeline: "Longo Prazo",
-    },
-    {
-      id: 4,
-      basin_id: 1,
-      axis: "Infraestrutura",
-      description: "Construção de Adutora de Engate Rápido",
-      typology: "Obra",
-      source: "Tesouro Estadual",
-      budget: 1200000,
-      timeline: "Curto Prazo",
-    },
-    {
-      id: 5,
-      basin_id: 1,
-      axis: "Gestão e Governança",
-      description: "Monitoramento qualitativo da água",
-      typology: "Monitoramento",
-      source: "Cobrança pelo uso",
-      budget: 300000,
-      timeline: "Contínuo",
-    },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
+  // Busca dados da API
   useEffect(() => {
-    async function fetchData() {
+    async function loadInitialData() {
       setLoading(true);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+
       try {
-        const data = await getActions(Number(basinId));
-        // Se a API retornar vazio (ainda não implementada), usa o mock
-        if (Array.isArray(data) && data.length > 0) {
-          setActions(data);
-        } else {
-          setActions(mockActions);
-        }
+        // 1. Busca os Filtros dinâmicos da rota /actions/filters
+        const filtersRes = await axios.get(`${baseUrl}/actions/filters`);
+        setFiltersData(filtersRes.data);
+
+        // 2. Busca as Ações (passando basin_id)
+        const actionsData = await getActions(Number(basinId), {
+          eje: selectedEixo,
+          tipo: selectedTipo,
+          crono: selectedCrono,
+        });
+
+        // Acesso ao campo .data conforme o JSON enviado
+        setActions(
+          Array.isArray(actionsData)
+            ? actionsData
+            : (actionsData as any).data || [],
+        );
       } catch (error) {
-        console.error("Usando dados de exemplo:", error);
-        setActions(mockActions);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchData();
-  }, [basinId]);
+    loadInitialData();
+  }, [basinId, selectedEixo, selectedTipo, selectedCrono]);
 
-  // Função para pegar o nome da bacia
-  const getBasinName = (id: string) => {
-    switch (id) {
-      case "1":
-        return "Bacia do Curu";
-      case "2":
-        return "Bacia do Salgado";
-      case "3":
-        return "Região Metropolitana";
-      default:
-        return "Região Hidrográfica";
-    }
+  // Regra de negócio para converter anos em Prazos (baseado no seu banco)
+  const getTimelineLabel = (start: number) => {
+    if (!start) return "N/A";
+    if (start <= 2033) return "Curto Prazo";
+    if (start <= 2043) return "Médio Prazo";
+    return "Longo Prazo";
   };
 
-  // Lógica de Filtragem
-  const filteredActions = actions.filter((item) => {
-    const matchEixo = filterEixo === "todos" || item.axis === filterEixo;
-    const matchTipologia =
-      filterTipologia === "todos" || item.typology === filterTipologia;
-    const matchCronograma =
-      filterCronograma === "todos" || item.timeline === filterCronograma;
-    return matchEixo && matchTipologia && matchCronograma;
-  });
+  // Formatação de custo com Unidade
+  const formatBudgetWithUnit = (item: any) => {
+    const value = Number(item.total_budget || 0);
+    const unit = item.budget_unit || "Global";
 
-  // Extrair opções únicas para os Selects
-  const uniqueEixos = Array.from(new Set(actions.map((a) => a.axis)));
-  const uniqueTipologias = Array.from(new Set(actions.map((a) => a.typology)));
-  const uniqueCronogramas = Array.from(new Set(actions.map((a) => a.timeline)));
-
-  // Formatador de Moeda
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    const formatted = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(value);
+
+    return unit === "Global"
+      ? formatted
+      : `${formatted} / ${unit.toLowerCase()}`;
   };
 
-  // Resetar filtros
-  const clearFilters = () => {
-    setFilterEixo("todos");
-    setFilterTipologia("todos");
-    setFilterCronograma("todos");
+  // Paginação
+  const totalPages = Math.ceil(actions.length / itemsPerPage);
+  const currentItems = actions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const getBasinName = (id: string) => {
+    const names: Record<string, string> = {
+      "1": "Curu",
+      "2": "Salgado",
+      "3": "Metropolitana",
+    };
+    return `Bacia do ${names[id] || "Hidrográfica"}`;
   };
 
   if (loading) {
     return (
-      <div className="flex h-[80vh] w-full items-center justify-center bg-gray-50/50">
-        <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-300" />
+          <p className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase italic">
+            Sincronizando Matriz
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center bg-gray-50/30 min-h-screen">
-      <div className="w-full max-w-7xl p-6 md:p-10 space-y-10">
-        {/* --- Hero Header --- */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 p-8 md:p-12 text-white shadow-xl">
-          <div className="relative z-10 space-y-6 text-center md:text-left">
-            <Badge
-              variant="outline"
-              className="border-white/30 text-white bg-white/10 px-4 py-1 text-sm uppercase tracking-widest backdrop-blur-md gap-2"
-            >
-              <Target className="w-4 h-4" />
-              Planejamento Estratégico
-            </Badge>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-              Planos de Ação e Investimentos
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
+      <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
+        <header className="mb-20 space-y-10 text-center md:text-left">
+          <Badge
+            variant="outline"
+            className="rounded-full border-blue-100 text-blue-600 bg-blue-50/50 px-4 py-1"
+          >
+            <TrendingUp className="w-3 h-3 mr-2" /> Portfólio de Investimentos
+          </Badge>
+          <div className="space-y-4">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-none">
+              Plano de Ações
             </h1>
-            <div className="max-w-3xl text-lg text-emerald-50 leading-relaxed font-light text-justify md:text-left">
-              Planos de Ação e Previsões de Investimentos estabelecem diretrizes
-              para a implementação das iniciativas na
-              <span className="font-semibold text-white">
-                {" "}
+            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-400">
+              <MapPin className="w-4 h-4 text-blue-500" />
+              <span className="text-sm font-medium italic">
                 {getBasinName(basinId)}
               </span>
-              , garantindo a execução eficiente das estratégias propostas. Esses
-              planos definem prazos, responsabilidades e fontes de financiamento
-              para ações prioritárias, assegurando o uso sustentável dos
-              recursos hídricos. As previsões contemplam obras de
-              infraestrutura, monitoramento, gestão hídrica e medidas de
-              conservação.
             </div>
           </div>
+        </header>
 
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-teal-900/20 blur-2xl" />
-        </div>
-
-        {/* --- Área de Controle (Filtros) --- */}
-        <Card className="border-none shadow-md bg-white">
-          <CardHeader className="pb-4 border-b">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-2 text-xl text-gray-800">
-                <Filter className="h-5 w-5 text-emerald-600" />
-                Filtros Avançados
-              </CardTitle>
-
-              {(filterEixo !== "todos" ||
-                filterTipologia !== "todos" ||
-                filterCronograma !== "todos") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Limpar Filtros
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Filtro Eixo */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Eixo Temático
-                </label>
-                <Select value={filterEixo} onValueChange={setFilterEixo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o eixo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os Eixos</SelectItem>
-                    {uniqueEixos.map((eixo) => (
-                      <SelectItem key={eixo} value={eixo}>
-                        {eixo}
+        {/* Filtros vindos da /actions/filters */}
+        <section className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-wrap items-end gap-6">
+          <div className="space-y-1.5 flex-1 min-w-[280px] max-w-[350px]">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
+              Eixo / Programa
+            </label>
+            <Select
+              value={selectedEixo}
+              onValueChange={(v) => {
+                setSelectedEixo(v);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-full">
+                <div className="truncate text-left">
+                  <SelectValue placeholder="Selecione o Eixo" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Eixos</SelectItem>
+                {filtersData.programas.map(
+                  (opt: string) =>
+                    opt && (
+                      <SelectItem key={opt} value={opt}>
+                        {opt}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    ),
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Filtro Tipologia */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Tipologia da Solução
-                </label>
-                <Select
-                  value={filterTipologia}
-                  onValueChange={setFilterTipologia}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo de solução" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todas as Tipologias</SelectItem>
-                    {uniqueTipologias.map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>
-                        {tipo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="space-y-1.5 w-[200px]">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
+              Tipologia
+            </label>
+            <Select
+              value={selectedTipo}
+              onValueChange={(v) => {
+                setSelectedTipo(v);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-full">
+                <SelectValue placeholder="Tipologia" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas</SelectItem>
+                {filtersData.tipologias.map((opt: string) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Filtro Cronograma */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600">
-                  Cronograma
-                </label>
-                <Select
-                  value={filterCronograma}
-                  onValueChange={setFilterCronograma}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Prazo de execução" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os Prazos</SelectItem>
-                    {uniqueCronogramas.map((crono) => (
-                      <SelectItem key={crono} value={crono}>
-                        {crono}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-1.5 w-[180px]">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
+              Prazo
+            </label>
+            <Select
+              value={selectedCrono}
+              onValueChange={(v) => {
+                setSelectedCrono(v);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-full">
+                <SelectValue placeholder="Cronograma" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Prazos</SelectItem>
+                <SelectItem value="Curto Prazo">Curto Prazo</SelectItem>
+                <SelectItem value="Médio Prazo">Médio Prazo</SelectItem>
+                <SelectItem value="Longo Prazo">Longo Prazo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* --- Tabela de Dados --- */}
-        <Card className="border-none shadow-lg bg-white overflow-hidden">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedEixo("todos");
+              setSelectedTipo("todos");
+              setSelectedCrono("todos");
+            }}
+            className="text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase ml-auto"
+          >
+            <X className="w-3 h-3 mr-2" /> Limpar Filtros
+          </Button>
+        </section>
+
+        <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-emerald-50/50">
-                <TableRow>
-                  <TableHead className="w-[180px] font-bold text-emerald-900">
+            <Table className="w-full table-fixed min-w-[1200px]">
+              <TableHeader className="bg-slate-50/80">
+                <TableRow className="border-slate-200">
+                  <TableHead className="w-[18%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Eixo
                   </TableHead>
-                  <TableHead className="min-w-[300px] font-bold text-emerald-900">
-                    Ações Específicas
+                  <TableHead className="w-[32%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Ação Estratégica
                   </TableHead>
-                  <TableHead className="w-[150px] font-bold text-emerald-900">
-                    Tipologia
+                  <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Responsável
                   </TableHead>
-                  <TableHead className="w-[180px] font-bold text-emerald-900">
-                    Fonte de Recursos
+                  <TableHead className="w-[15%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">
+                    Investimento
                   </TableHead>
-                  <TableHead className="w-[180px] font-bold text-emerald-900 text-right">
-                    Previsão (R$)
-                  </TableHead>
-                  <TableHead className="w-[150px] font-bold text-emerald-900 text-center">
-                    Cronograma
+                  <TableHead className="w-[15%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
+                    Prazo
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredActions.length > 0 ? (
-                  filteredActions.map((item) => (
+                {currentItems.length > 0 ? (
+                  currentItems.map((item) => (
                     <TableRow
                       key={item.id}
-                      className="hover:bg-gray-50/50 transition-colors"
+                      className="border-slate-100 hover:bg-blue-50/30 transition-colors"
                     >
-                      <TableCell className="font-medium text-gray-700">
-                        {item.axis}
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-start gap-2">
-                          <ArrowUpRight className="h-4 w-4 text-emerald-400 mt-1 shrink-0" />
-                          {item.description}
+                      <TableCell className="px-6 py-6 align-top">
+                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal break-words">
+                          {item.program?.name || "Programa não definido"}
+                        </div>
+                        <div className="mt-2 inline-flex items-center gap-1.5 text-[9px] font-bold text-blue-500 uppercase tracking-tighter bg-blue-50 px-1.5 py-0.5 rounded">
+                          <Tag className="w-2.5 h-2.5" /> {item.typology}
                         </div>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell className="px-6 py-6 align-top">
+                        <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-normal break-words">
+                          {item.description}
+                        </p>
+                      </TableCell>
+
+                      <TableCell className="px-6 py-6 align-top">
+                        <div className="flex items-start gap-2 text-[12px] font-medium text-slate-600 whitespace-normal break-words leading-snug">
+                          <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                          <span>{item.source || "Órgão a definir"}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-6 py-6 text-right align-top font-mono font-bold text-slate-900 text-sm">
+                        {formatBudgetWithUnit(item)}
+                      </TableCell>
+
+                      <TableCell className="px-6 py-6 align-top text-center">
                         <Badge
                           variant="secondary"
-                          className="bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          className="rounded-full bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-none px-3 mb-1"
                         >
-                          {item.typology}
+                          {getTimelineLabel(item.start_year)}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {item.source}
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-medium text-gray-800">
-                        {formatCurrency(item.budget)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          className={`
-                                                ${item.timeline.includes("Curto") ? "bg-green-100 text-green-700 hover:bg-green-200" : ""}
-                                                ${item.timeline.includes("Médio") ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : ""}
-                                                ${item.timeline.includes("Longo") ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}
-                                                ${!item.timeline.includes("Prazo") ? "bg-gray-100 text-gray-700" : ""}
-                                            `}
-                        >
-                          {item.timeline}
-                        </Badge>
+                        <div className="text-[10px] text-slate-400 font-mono tracking-tighter">
+                          {item.start_year} — {item.end_year}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
-                      className="h-32 text-center text-gray-500"
+                      colSpan={5}
+                      className="h-40 text-center text-slate-400 italic"
                     >
-                      Nenhuma ação encontrada com os filtros selecionados.
+                      Nenhum resultado para estes filtros.
                     </TableCell>
                   </TableRow>
                 )}
@@ -385,24 +337,69 @@ export default function PlanosAcaoPage() {
             </Table>
           </div>
 
-          {/* Rodapé da Tabela (Resumo) */}
-          <div className="bg-gray-50 border-t p-4 flex justify-between items-center text-sm text-gray-500">
-            <span>
-              Total de Ações:{" "}
-              <strong className="text-gray-900">
-                {filteredActions.length}
-              </strong>
+          {/* Paginação */}
+          <div className="bg-slate-50/50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+              Pág. {currentPage} / {totalPages || 1}
             </span>
-            <span>
-              Investimento Total (Filtrado):{" "}
-              <strong className="text-emerald-700 font-mono text-base">
-                {formatCurrency(
-                  filteredActions.reduce((acc, curr) => acc + curr.budget, 0),
-                )}
-              </strong>
-            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="h-8 w-8 p-0 rounded-md border-slate-300 bg-white shadow-sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="h-8 w-8 p-0 rounded-md border-slate-300 bg-white shadow-sm"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </Card>
+        </div>
+
+        {/* Totalizador Rodapé */}
+        <footer className="mt-12 flex flex-col md:flex-row justify-between items-center bg-slate-900 rounded-2xl p-10 text-white">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              Aporte Total Estimado
+            </p>
+            <p className="text-4xl font-mono font-bold text-blue-400">
+              {new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(
+                actions
+                  .filter((a) => a.budget_unit === "Global")
+                  .reduce((acc, curr) => acc + (curr.total_budget || 0), 0),
+              )}
+            </p>
+            <p className="text-[9px] text-slate-500 italic">
+              * Somente custos globais totalizados
+            </p>
+          </div>
+          <div className="h-px w-full md:w-px md:h-12 bg-slate-800 my-6 md:my-0" />
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              Volume de Iniciativas
+            </p>
+            <p className="text-3xl font-bold">
+              {actions.length}{" "}
+              <span className="text-sm font-light text-slate-400 uppercase">
+                ações
+              </span>
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
