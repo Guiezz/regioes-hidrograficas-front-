@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getActions } from "@/services/api"; // Certifique-se de ter a chamada para /filters no seu service
+import { getActions } from "@/services/api";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ import {
 import {
   Loader2,
   X,
-  Coins,
   MapPin,
   TrendingUp,
   ChevronLeft,
@@ -40,20 +39,26 @@ export default function PlanosAcaoPage() {
   const [actions, setActions] = useState<any[]>([]);
   const [filtersData, setFiltersData] = useState<any>({
     eixos: [],
-    programas: [],
+    programas: [], // Mantido caso precise no futuro, mas não usado no filtro
     tipologias: [],
   });
   const [loading, setLoading] = useState(true);
 
   // Estados dos Filtros selecionados
+  // REMOVIDO: selectedProg
   const [selectedEixo, setSelectedEixo] = useState("todos");
   const [selectedTipo, setSelectedTipo] = useState("todos");
-  const [selectedCrono, setSelectedCrono] = useState("todos");
+  const [selectedCrono, setSelectedCrono] = useState("todos"); // Novo foco
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Busca dados da API
+  // Helpers para lógica de datas
+  const isCurtoPrazo = (year: number) => year <= 2033;
+  const isMedioPrazo = (year: number) => year > 2033 && year <= 2043;
+  const isLongoPrazo = (year: number) => year > 2043;
+
+  // Busca dados da API e aplica filtros locais
   useEffect(() => {
     async function loadInitialData() {
       setLoading(true);
@@ -61,23 +66,39 @@ export default function PlanosAcaoPage() {
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
       try {
-        // 1. Busca os Filtros dinâmicos da rota /actions/filters
-        const filtersRes = await axios.get(`${baseUrl}/actions/filters`);
+        // 1. Busca os Filtros dinâmicos (para preencher os combos de Eixo e Tipologia)
+        const filtersRes = await axios.get(
+          `${baseUrl}/actions/filters?basin_id=${basinId}`,
+        );
         setFiltersData(filtersRes.data);
 
-        // 2. Busca as Ações (passando basin_id)
+        // 2. Busca as Ações da API
+        // Passamos apenas Eixo e Tipologia para a API filtrar (se o backend suportar).
+        // Removemos 'programa' pois foi substituído na tela.
         const actionsData = await getActions(Number(basinId), {
-          eje: selectedEixo,
-          tipo: selectedTipo,
-          crono: selectedCrono,
+          eixo: selectedEixo === "todos" ? "" : selectedEixo,
+          tipologia: selectedTipo === "todos" ? "" : selectedTipo,
         });
 
-        // Acesso ao campo .data conforme o JSON enviado
-        setActions(
-          Array.isArray(actionsData)
-            ? actionsData
-            : (actionsData as any).data || [],
-        );
+        const rawList = Array.isArray(actionsData)
+          ? actionsData
+          : (actionsData as any).data || [];
+
+        // 3. Aplicação do Filtro de Cronograma no Front-end
+        // Filtramos a lista recebida baseada no ano de início (start_year)
+        const filteredList = rawList.filter((item: any) => {
+          if (selectedCrono === "todos") return true;
+
+          const start = item.start_year || 0;
+
+          if (selectedCrono === "Curto Prazo") return isCurtoPrazo(start);
+          if (selectedCrono === "Médio Prazo") return isMedioPrazo(start);
+          if (selectedCrono === "Longo Prazo") return isLongoPrazo(start);
+
+          return true;
+        });
+
+        setActions(filteredList);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -85,9 +106,9 @@ export default function PlanosAcaoPage() {
       }
     }
     loadInitialData();
-  }, [basinId, selectedEixo, selectedTipo, selectedCrono]);
+  }, [basinId, selectedEixo, selectedTipo, selectedCrono]); // Dependências atualizadas
 
-  // Regra de negócio para converter anos em Prazos (baseado no seu banco)
+  // Regra de negócio para converter anos em Prazos (Labels visuais)
   const getTimelineLabel = (start: number) => {
     if (!start) return "N/A";
     if (start <= 2033) return "Curto Prazo";
@@ -162,11 +183,12 @@ export default function PlanosAcaoPage() {
           </div>
         </header>
 
-        {/* Filtros vindos da /actions/filters */}
+        {/* Filtros Ajustados */}
         <section className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-wrap items-end gap-6">
-          <div className="space-y-1.5 flex-1 min-w-[280px] max-w-[350px]">
+          {/* Filtro: Eixo */}
+          <div className="space-y-1.5 w-55">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
-              Eixo / Programa
+              Eixo
             </label>
             <Select
               value={selectedEixo}
@@ -176,25 +198,21 @@ export default function PlanosAcaoPage() {
               }}
             >
               <SelectTrigger className="bg-white w-full">
-                <div className="truncate text-left">
-                  <SelectValue placeholder="Selecione o Eixo" />
-                </div>
+                <SelectValue placeholder="Selecione o Eixo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Eixos</SelectItem>
-                {filtersData.programas.map(
-                  (opt: string) =>
-                    opt && (
-                      <SelectItem key={opt} value={opt}>
-                        {opt}
-                      </SelectItem>
-                    ),
-                )}
+                {filtersData.eixos?.map((opt: string) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-1.5 w-[200px]">
+          {/* Filtro: Tipologia */}
+          <div className="space-y-1.5 w-45">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Tipologia
             </label>
@@ -210,7 +228,7 @@ export default function PlanosAcaoPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todas</SelectItem>
-                {filtersData.tipologias.map((opt: string) => (
+                {filtersData.tipologias?.map((opt: string) => (
                   <SelectItem key={opt} value={opt}>
                     {opt}
                   </SelectItem>
@@ -219,9 +237,10 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          <div className="space-y-1.5 w-[180px]">
+          {/* Filtro: Cronograma (Substituindo Programa) */}
+          <div className="space-y-1.5 flex-1 min-w-50">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
-              Prazo
+              Cronograma (Prazo)
             </label>
             <Select
               value={selectedCrono}
@@ -231,23 +250,30 @@ export default function PlanosAcaoPage() {
               }}
             >
               <SelectTrigger className="bg-white w-full">
-                <SelectValue placeholder="Cronograma" />
+                <SelectValue placeholder="Selecione o Prazo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Prazos</SelectItem>
-                <SelectItem value="Curto Prazo">Curto Prazo</SelectItem>
-                <SelectItem value="Médio Prazo">Médio Prazo</SelectItem>
-                <SelectItem value="Longo Prazo">Longo Prazo</SelectItem>
+                <SelectItem value="Curto Prazo">
+                  Curto Prazo (até 2033)
+                </SelectItem>
+                <SelectItem value="Médio Prazo">
+                  Médio Prazo (2034 - 2043)
+                </SelectItem>
+                <SelectItem value="Longo Prazo">
+                  Longo Prazo (após 2043)
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Botão Limpar */}
           <Button
             variant="ghost"
             onClick={() => {
               setSelectedEixo("todos");
               setSelectedTipo("todos");
-              setSelectedCrono("todos");
+              setSelectedCrono("todos"); // Reseta o cronograma
             }}
             className="text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase ml-auto"
           >
@@ -255,15 +281,16 @@ export default function PlanosAcaoPage() {
           </Button>
         </section>
 
+        {/* Tabela de Resultados */}
         <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <Table className="w-full table-fixed min-w-[1200px]">
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="border-slate-200">
-                  <TableHead className="w-[18%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                    Eixo
+                  <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Eixo / Programa
                   </TableHead>
-                  <TableHead className="w-[32%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                  <TableHead className="w-[30%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Ação Estratégica
                   </TableHead>
                   <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
@@ -285,10 +312,14 @@ export default function PlanosAcaoPage() {
                       className="border-slate-100 hover:bg-blue-50/30 transition-colors"
                     >
                       <TableCell className="px-6 py-6 align-top">
-                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal break-words">
+                        {/* Exibição do Eixo (campo virtual axis_name) e Programa */}
+                        <div className="text-[9px] font-black text-blue-600 uppercase tracking-wider mb-1">
+                          {item.axis_name || "Eixo não definido"}
+                        </div>
+                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal break-words mb-2">
                           {item.program?.name || "Programa não definido"}
                         </div>
-                        <div className="mt-2 inline-flex items-center gap-1.5 text-[9px] font-bold text-blue-500 uppercase tracking-tighter bg-blue-50 px-1.5 py-0.5 rounded">
+                        <div className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter border border-slate-200 px-1.5 py-0.5 rounded">
                           <Tag className="w-2.5 h-2.5" /> {item.typology}
                         </div>
                       </TableCell>
