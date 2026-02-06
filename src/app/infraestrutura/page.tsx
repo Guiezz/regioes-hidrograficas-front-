@@ -64,9 +64,9 @@ export default function InfraestruturaPage() {
   const getBasinName = (id: string) => {
     switch (id) {
       case "1":
-        return "Bacia do Curu";
+        return "Região Hidrográfica do Curu";
       case "2":
-        return "Bacia do Salgado";
+        return "Região Hidrográfica do Salgado";
       case "3":
         return "Região Metropolitana";
       default:

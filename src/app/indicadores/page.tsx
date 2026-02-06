@@ -75,7 +75,7 @@ export default function IndicadoresPage() {
       "2": "Salgado",
       "3": "Metropolitana",
     };
-    return `Bacia do ${names[id] || "Hidrográfica"}`;
+    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
   };
 
   // Calcula a média global formatada (0.45 -> 45.0%)

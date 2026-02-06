@@ -34,8 +34,8 @@ export function Header() {
               <SelectValue placeholder="Selecione a bacia" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Bacia do Curu</SelectItem>
-              <SelectItem value="2">Bacia do Salgado</SelectItem>
+              <SelectItem value="1">Curu</SelectItem>
+              <SelectItem value="2">Salgado</SelectItem>
               <SelectItem value="3">Metropolitana</SelectItem>
             </SelectContent>
           </Select>

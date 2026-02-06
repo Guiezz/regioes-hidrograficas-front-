@@ -1,248 +1,167 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { getRadarData, getConsolidated } from "@/services/api";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, PieChart, Target, Activity } from "lucide-react";
+import Link from "next/link";
 import {
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Tooltip,
-  Legend,
-} from "recharts";
+  Droplets,
+  LayoutDashboard,
+  FileText,
+  Workflow,
+  Activity,
+  Scale,
+  ClipboardList,
+  ArrowRight,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-interface RadarItem {
-  category: string;
-  value: number;
-}
-
-export default function IndicadoresPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
-
-  const [chartData, setChartData] = useState<RadarItem[]>([]);
-  const [consolidated, setConsolidated] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        // Buscamos em paralelo: Dados do Gráfico (Radar) e Dados Consolidados (Total/Índice)
-        const [radarRes, consolidatedRes] = await Promise.all([
-          getRadarData(Number(basinId)),
-          getConsolidated(Number(basinId)),
-        ]);
-
-        // 1. Processar dados do Radar (Objeto -> Array)
-        // O backend retorna: { "Estrutural": 20, "Gestão": 8, ... }
-        const formattedRadar = Object.entries(radarRes || {})
-          .map(([category, value]) => ({
-            category,
-            value: Number(value),
-          }))
-          .sort((a, b) => b.value - a.value); // Ordena para melhor visualização
-
-        setChartData(formattedRadar);
-
-        // 2. Salvar dados consolidados (Total de Ações, Índice Global, etc)
-        setConsolidated(consolidatedRes);
-      } catch (error) {
-        console.error("Erro ao carregar indicadores:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [basinId]);
-
-  const getBasinName = (id: string) => {
-    const names: Record<string, string> = {
-      "1": "Curu",
-      "2": "Salgado",
-      "3": "Metropolitana",
-    };
-    return `Bacia do ${names[id] || "Hidrográfica"}`;
-  };
-
-  // Calcula a média global formatada (0.45 -> 45.0%)
-  // O backend envia 0 a 1, então multiplicamos por 100
-  const globalIndex = consolidated?.indice_global
-    ? (consolidated.indice_global * 100).toFixed(1)
-    : "0.0";
-
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-      </div>
-    );
-  }
-
+export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-white selection:bg-violet-100 selection:text-violet-900">
-      <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
-        {/* HEADER */}
-        <header className="mb-16 space-y-8">
-          <Badge
-            variant="outline"
-            className="rounded-full border-violet-200 text-violet-700 bg-violet-50/50 px-4 py-1"
-          >
-            <PieChart className="w-3 h-3 mr-2" /> Inteligência de Dados
-          </Badge>
+    <div className="min-h-screen bg-white">
+      {/* SEÇÃO HERO - O QUE É O SISTEMA */}
+      <section className="relative py-20 lg:py-32 px-6 overflow-hidden border-b border-slate-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center space-y-8">
+            <Badge
+              variant="outline"
+              className="px-4 py-1.5 border-blue-200 text-blue-700 bg-blue-50 animate-fade-in"
+            >
+              Plataforma Oficial de Gestão Hídrica
+            </Badge>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-end">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl font-bold text-slate-900 tracking-tight leading-none">
-                Indicadores de Execução
-              </h1>
-              <div className="flex items-center gap-2 text-slate-400">
-                <Target className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-medium italic">
-                  {getBasinName(basinId)}
-                </span>
-              </div>
-            </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight max-w-4xl">
+              Gestão Inteligente de{" "}
+              <span className="text-blue-600">Recursos Hídricos</span>
+            </h1>
 
-            <p className="text-slate-600 text-sm leading-relaxed text-justify lg:max-w-xl">
-              Indicadores de Execução acompanham o desempenho dos Planos de Ação
-              nas Regiões Hidrográficas, permitindo avaliar o avanço das
-              iniciativas propostas e a efetividade das estratégias
-              implementadas. Esses indicadores fornecem uma visão integrada dos
-              resultados alcançados, facilitando a identificação de áreas de
-              destaque e de pontos que necessitam de ajustes.
+            <p className="text-lg md:text-xl text-slate-600 max-w-2xl leading-relaxed">
+              O <strong>SIGRH</strong> é o Sistema de Informações de Gestão das
+              Regiões Hidrográficas, projetado para centralizar o monitoramento,
+              planejamento estratégico e a tomada de decisão sustentável sobre o
+              uso da água.
             </p>
-          </div>
-        </header>
 
-        {/* ÁREA DO GRÁFICO RADAR */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Texto de Apoio e Métricas (Esquerda) */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="p-6 bg-violet-50 rounded-2xl border border-violet-100">
-              <h3 className="text-violet-900 font-bold text-lg mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5" /> Performance Global
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed text-justify mb-4">
-                O gráfico ao lado apresenta a distribuição do{" "}
-                <strong>Volume de Ações (Ponderado)</strong> por tipologia.
-                Áreas mais expandidas indicam maior concentração de esforços e
-                investimentos estratégicos.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-violet-200">
-                <div>
-                  <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-1">
-                    Total de Ações
-                  </p>
-                  <p className="text-2xl font-mono font-bold text-violet-600">
-                    {consolidated?.total_actions || 0}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-1">
-                    Índice Global
-                  </p>
-                  <p className="text-2xl font-mono font-bold text-emerald-600">
-                    {globalIndex}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border border-dashed border-slate-200 rounded-2xl">
-              <p className="text-slate-500 text-sm leading-relaxed text-justify">
-                Esta visualização permite identificar rapidamente o equilíbrio
-                entre as diferentes áreas de atuação (como Infraestrutura vs.
-                Gestão) e priorizar recursos onde necessário.
-              </p>
-            </div>
-          </div>
-
-          {/* Gráfico Radar (Direita) */}
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 p-8 flex flex-col min-h-[600px]">
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
-                Distribuição por Volume (Pesos)
-              </h4>
-              <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded font-mono">
-                Pontuação Acumulada
-              </span>
-            </div>
-
-            <div className="flex-1 w-full min-h-[500px]">
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="70%"
-                    data={chartData}
-                  >
-                    <PolarGrid stroke="#e2e8f0" strokeWidth={1.5} />
-                    <PolarAngleAxis
-                      dataKey="category"
-                      tick={{
-                        fill: "#64748b",
-                        fontSize: 11,
-                        fontWeight: 500,
-                      }}
-                    />
-                    <PolarRadiusAxis
-                      angle={90}
-                      // Deixamos domain 'auto' pois os pesos podem variar muito entre bacias
-                      domain={[0, "auto"]}
-                      tick={{
-                        fill: "#94a3b8",
-                        fontSize: 10,
-                      }}
-                      axisLine={false}
-                    />
-                    <Radar
-                      name="Volume (Peso)"
-                      dataKey="value"
-                      stroke="#8b5cf6"
-                      fill="#8b5cf6"
-                      fillOpacity={0.6}
-                      strokeWidth={3}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                      itemStyle={{
-                        color: "#1f2937",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: "20px", fontSize: "12px" }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-slate-400">
-                  <div className="text-center space-y-2">
-                    <Activity className="w-12 h-12 mx-auto opacity-50" />
-                    <p className="text-sm">
-                      Sem dados para exibir nesta visualização.
-                    </p>
-                  </div>
-                </div>
-              )}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button
+                asChild
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-14 text-lg rounded-full shadow-lg shadow-blue-200"
+              >
+                <Link href="/indicadores" className="flex items-center gap-2">
+                  Acessar Indicadores <ArrowRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="px-8 h-14 text-lg rounded-full border-slate-200"
+              >
+                <Link href="/metodologia">Conhecer Metodologia</Link>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Elemento Visual de Fundo */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50 -z-10" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-50 rounded-full blur-3xl opacity-50 -z-10" />
+      </section>
+
+      {/* SEÇÃO DE FUNCIONALIDADES */}
+      <section className="py-24 px-6 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              Funcionalidades do Sistema
+            </h2>
+            <p className="text-slate-500 max-w-xl">
+              Explore os módulos integrados para uma visão 360º da saúde hídrica
+              regional.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={<LayoutDashboard className="text-violet-500" />}
+              title="Dashboard de Indicadores"
+              description="Visualização gráfica do desempenho global e execução de metas nas bacias hidrográficas."
+              href="/indicadores"
+            />
+            <FeatureCard
+              icon={<Scale className="text-blue-700" />}
+              title="Balanço Hídrico"
+              description="Análise técnica comparativa entre a oferta disponível e a demanda consumida."
+              href="/balanco"
+            />
+            <FeatureCard
+              icon={<ClipboardList className="text-emerald-600" />}
+              title="Planos de Ação"
+              description="Monitoramento detalhado das iniciativas propostas e cronogramas de execução."
+              href="/planos"
+            />
+            <FeatureCard
+              icon={<FileText className="text-amber-600" />}
+              title="Identificação e Cadastro"
+              description="Base de dados centralizada com as características geográficas e socioeconômicas."
+              href="/identificacao"
+            />
+            <FeatureCard
+              icon={<Workflow className="text-emerald-500" />}
+              title="Metodologia Aplicada"
+              description="Acesso aos critérios técnicos e normativos utilizados no cálculo dos indicadores."
+              href="/metodologia"
+            />
+            <FeatureCard
+              icon={<Activity className="text-rose-600" />}
+              title="Monitoramento"
+              description="Acompanhamento contínuo das variações hídricas e alertas de criticidade."
+              href="/monitoramento"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER BREVE */}
+      <footer className="py-12 border-t border-slate-100 text-center">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Droplets className="w-6 h-6 text-blue-500" />
+          <span className="font-bold text-slate-900 uppercase tracking-widest text-sm">
+            SIGRH
+          </span>
+        </div>
+        <p className="text-slate-400 text-xs uppercase tracking-tighter">
+          Plano de Recursos Hídricos
+        </p>
+      </footer>
     </div>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+  href,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group p-8 bg-white border border-slate-200 rounded-2xl transition-all duration-300 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/5"
+    >
+      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-xl font-bold text-slate-900 mb-3 flex items-center justify-between">
+        {title}
+        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+      </h3>
+      <p className="text-slate-600 text-sm leading-relaxed">{description}</p>
+    </Link>
   );
 }

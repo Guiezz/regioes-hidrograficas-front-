@@ -182,7 +182,7 @@ export default function PlanosAcaoPage() {
       "2": "Salgado",
       "3": "Metropolitana",
     };
-    return `Bacia do ${names[id] || "Hidrográfica"}`;
+    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
   };
 
   if (loading) {

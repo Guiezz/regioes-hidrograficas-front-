@@ -65,9 +65,9 @@ export default function IdentificacaoPage() {
   const getBasinName = (id: string) => {
     switch (id) {
       case "1":
-        return "Bacia do Curu";
+        return "Região Hidrográfica do Curu";
       case "2":
-        return "Bacia do Salgado";
+        return "Região Hidrográfica do Salgado";
       case "3":
         return "Região Metropolitana";
       default:
@@ -99,7 +99,7 @@ export default function IdentificacaoPage() {
           <div className="flex items-center gap-4">
             <div className="h-px w-12 bg-sky-500" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-600">
-              Relatório Técnico — Capítulo 01
+              Relatório Técnico
             </span>
           </div>
 

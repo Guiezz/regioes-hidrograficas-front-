@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   FileText,
   TableProperties,
-  BarChart3,
   Droplets,
   Workflow,
   Building2,
@@ -18,12 +17,6 @@ import {
 } from "lucide-react";
 
 const routes = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/",
-    color: "text-sky-500",
-  },
   {
     label: "Identificação",
     icon: FileText,
@@ -73,22 +66,16 @@ const routes = [
     color: "text-emerald-600",
   },
   {
-    label: "Monitoramento", // Adicionei a rota de monitoramento aqui se já existir no menu
-    icon: Activity, // Ou outro ícone como Target
+    label: "Monitoramento",
+    icon: Activity,
     href: "/monitoramento",
     color: "text-green-500",
   },
   {
-    label: "Indicadores", // Mudou de Dashboard
-    icon: LayoutDashboard, // Pode manter ou usar PieChart/BarChart3
-    href: "/indicadores", // Apontando para a nova página
-    color: "text-violet-500", // Combinando com a cor da página nova
-  },
-  {
-    label: "Prognóstico",
-    icon: BarChart3,
-    href: "/prognostico",
-    color: "text-orange-700",
+    label: "Indicadores",
+    icon: LayoutDashboard,
+    href: "/indicadores",
+    color: "text-violet-500",
   },
 ];
 
