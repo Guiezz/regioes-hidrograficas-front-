@@ -14,6 +14,7 @@ import {
   Waves,
   Scale,
   ClipboardList,
+  Coins,
 } from "lucide-react";
 
 const routes = [
@@ -63,7 +64,7 @@ const routes = [
     label: "Planos de Ação",
     icon: ClipboardList,
     href: "/planos",
-    color: "text-emerald-600",
+    color: "text-cyan-600",
   },
   {
     label: "Monitoramento",
@@ -76,6 +77,12 @@ const routes = [
     icon: LayoutDashboard,
     href: "/indicadores",
     color: "text-violet-500",
+  },
+  {
+    label: "Custos",
+    icon: Coins,
+    href: "/custos",
+    color: "text-yellow-500",
   },
 ];
 

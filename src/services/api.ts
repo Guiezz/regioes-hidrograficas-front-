@@ -1,82 +1,104 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import axios from "axios";
 
+// 1. Configuração da instância do axios
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
+});
+
+// Interfaces
 export interface ActionPlan {
   id: number;
   description: string;
   typology: string;
   source: string;
   budget: number;
-  // No backend o campo cost costuma ser 'budget' ou 'cost'
-  // Ajuste os nomes abaixo conforme o JSON real do seu Go
   program?: {
     name: string;
     axis: {
       name: string;
     };
   };
-  axis?: string; // Fallback para compatibilidade
+  axis?: string;
   timeline: string;
   basin_id: number;
 }
+
 export interface ActionsFilters {
   eixo?: string;
   programa?: string;
   tipologia?: string;
 }
 
-export async function getActions(
-  basinId = 1,
-  filters?: ActionsFilters, // Use a interface correta
-) {
+/**
+ * Funções de Serviço
+ */
+
+// Busca as ações com filtros (usando a instância api)
+export async function getActions(basinId = 1, filters?: ActionsFilters) {
   try {
-    // URL base
-    let url = `${API_URL}/actions?basin_id=${basinId}`;
+    const params: any = { basin_id: basinId };
 
-    // 1. Correção: Usar a chave 'eixo' que vem do componente
-    if (filters?.eixo && filters.eixo !== "todos")
-      url += `&eixo=${encodeURIComponent(filters.eje || filters.eixo)}`;
-    // Nota: mantive o fallback caso ainda usem 'eje' em outro lugar, mas o ideal é padronizar.
-
-    // 2. Correção: Adicionar lógica para o 'programa' (que faltava)
+    if (filters?.eixo && filters.eixo !== "todos") params.eixo = filters.eixo;
     if (filters?.programa && filters.programa !== "todos")
-      url += `&programa=${encodeURIComponent(filters.programa)}`;
-
-    // 3. Correção: Usar a chave 'tipologia' que vem do componente
+      params.programa = filters.programa;
     if (filters?.tipologia && filters.tipologia !== "todos")
-      url += `&tipologia=${encodeURIComponent(filters.tipologia)}`;
-    // Fallback para 'tipo' caso o código antigo ainda envie assim:
-    else if ((filters as any)?.tipo && (filters as any).tipo !== "todos")
-      url += `&tipologia=${encodeURIComponent((filters as any).tipo)}`;
+      params.tipologia = filters.tipologia;
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Falha ao buscar ações");
-
-    const responseData = await res.json();
-    return responseData.data || [];
+    const res = await api.get("/actions", { params });
+    // Ajuste conforme a estrutura de retorno do seu backend (responseData.data ou res.data)
+    return res.data.data || res.data || [];
   } catch (error) {
-    console.warn("Erro ao buscar ações, retornando vazio:", error);
+    console.warn("Erro ao buscar ações:", error);
     return [];
   }
 }
 
+// Dados do gráfico Radar
 export async function getRadarData(basinId = 1) {
-  const res = await fetch(`${API_URL}/dashboard/radar?basin_id=${basinId}`, {
-    cache: "no-store",
+  const res = await api.get("/dashboard/radar", {
+    params: { basin_id: basinId },
   });
-  return res.json();
+  return res.data;
 }
 
+// Dados Consolidados (Cards)
 export async function getConsolidated(basinId = 1) {
-  const res = await fetch(
-    `${API_URL}/dashboard/consolidated?basin_id=${basinId}`,
-    { cache: "no-store" },
-  );
-  return res.json();
+  const res = await api.get("/dashboard/consolidated", {
+    params: { basin_id: basinId },
+  });
+  return res.data;
 }
 
+// Conteúdo das Seções (Textos do plano)
 export async function getSections(basinId = 1) {
-  const res = await fetch(`${API_URL}/content?basin_id=${basinId}`, {
-    cache: "no-store",
-  });
-  return res.json();
+  const res = await api.get("/content", { params: { basin_id: basinId } });
+  return res.data;
 }
+
+// Matriz de Ações (Financeiro)
+// No seu src/services/api.ts, atualize a função getMatriz:
+
+export const getMatriz = async (basinId?: number) => {
+  try {
+    const params = basinId ? { basin_id: basinId } : {};
+    const response = await api.get("/financeiro/matriz", { params });
+
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar matriz:", error);
+    return [];
+  }
+};
+// Custos (Financeiro)
+export const getCustos = async (basinId?: number) => {
+  try {
+    const params = basinId ? { params: { basin_id: basinId } } : {};
+    const response = await api.get("/financeiro/custos", params);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar custos:", error);
+    return [];
+  }
+};
+
+export default api;

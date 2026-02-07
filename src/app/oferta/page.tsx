@@ -113,7 +113,7 @@ export default function OfertaPage() {
 
           <div className="space-y-6">
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[0.95]">
-              {mainTitle ? mainTitle.title : "Oferta Hídrica"}
+              Disponibilidade Hídrica
             </h1>
             <div className="flex items-center gap-2 text-slate-400 font-medium">
               <MapPin className="w-4 h-4 text-blue-500" />

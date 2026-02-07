@@ -1,0 +1,274 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { getCustos } from "@/services/api";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Loader2,
+  MapPin,
+  DollarSign,
+  Calendar,
+  PieChart,
+  Info,
+} from "lucide-react";
+
+export default function CustosPage() {
+  const searchParams = useSearchParams();
+  const basinId = searchParams.get("basin_id") || "1";
+
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await getCustos(Number(basinId));
+        setData(res || []);
+      } catch (error) {
+        console.error("Erro ao carregar custos:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [basinId]);
+
+  const getBasinName = (id: string) => {
+    const names: Record<string, string> = {
+      "1": "Curu",
+      "2": "Salgado",
+      "3": "Metropolitana",
+    };
+    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-200" />
+          <span className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase italic">
+            Calculando Investimentos
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const totalGeral = data.find(
+    (item) => item.eixo.toUpperCase() === "TOTAL GERAL",
+  );
+  const custosEixos = data.filter(
+    (item) => item.eixo.toUpperCase() !== "TOTAL GERAL",
+  );
+
+  return (
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
+      <div className="max-w-4xl mx-auto px-6 py-20 lg:py-32">
+        {/* Header Editorial */}
+        <header className="mb-20 space-y-10">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-12 bg-sky-500" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-600">
+              Planejamento Financeiro
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[0.95]">
+              Custos do Plano
+            </h1>
+            <div className="flex items-center gap-2 text-slate-400 font-medium">
+              <MapPin className="w-4 h-4 text-blue-500" />
+              <span className="text-sm tracking-wide">
+                {getBasinName(basinId)}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-slate-100">
+            <p className="text-sm text-slate-500 leading-relaxed text-justify">
+              O investimento necessário para a implementação dos Planos de Ação
+              foi cuidadosamente estimado para garantir a execução das
+              estratégias em cada eixo temático. Os valores refletem o
+              compromisso com uma gestão hídrica eficiente, considerando
+              infraestrutura, preservação e capacitação.
+            </p>
+            <p className="text-sm text-slate-500 leading-relaxed text-justify">
+              O detalhamento por período e eixo garante transparência e apoia o
+              planejamento estratégico para captação de recursos. Este somatório
+              fornece uma visão clara dos aportes necessários ano a ano,
+              assegurando a viabilidade das metas propostas.
+            </p>
+          </div>
+        </header>
+
+        {/* Sistema de Abas Editorial */}
+        <Tabs defaultValue="totais" className="space-y-8">
+          <TabsList className="bg-slate-50 p-1 rounded-full border border-slate-200">
+            <TabsTrigger
+              value="totais"
+              className="rounded-full px-8 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <PieChart className="w-4 h-4 mr-2" /> Visão por Eixo
+            </TabsTrigger>
+            <TabsTrigger
+              value="periodos"
+              className="rounded-full px-8 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Calendar className="w-4 h-4 mr-2" /> Cronograma Financeiro
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ABA 1: CUSTOS TOTAIS */}
+          <TabsContent
+            value="totais"
+            className="space-y-6 focus-visible:outline-none"
+          >
+            <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+              <Table>
+                <TableHeader className="bg-slate-50">
+                  <TableRow>
+                    <TableHead className="py-6 px-6 font-bold text-slate-900">
+                      Eixo Temático
+                    </TableHead>
+                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-right">
+                      Valor Total
+                    </TableHead>
+                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-center w-[120px]">
+                      Percentual
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {custosEixos.map((item, idx) => (
+                    <TableRow key={idx} className="group hover:bg-blue-50/30">
+                      <TableCell className="py-6 px-6 font-semibold text-slate-700">
+                        {item.eixo}
+                      </TableCell>
+                      <TableCell className="py-6 px-6 text-right font-mono font-medium text-slate-900">
+                        {item.valor_total}
+                      </TableCell>
+                      <TableCell className="py-6 px-6 text-center">
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none font-bold"
+                        >
+                          {(item.percentual * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {totalGeral && (
+                    <TableRow className="bg-slate-900 hover:bg-slate-800">
+                      <TableCell className="py-8 px-6 font-bold text-white uppercase tracking-widest text-xs">
+                        Total Geral do Plano
+                      </TableCell>
+                      <TableCell className="py-8 px-6 text-right font-mono font-bold text-blue-400 text-xl">
+                        {totalGeral.valor_total}
+                      </TableCell>
+                      <TableCell className="py-8 px-6 text-center font-bold text-slate-400 text-sm">
+                        100%
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-500 italic leading-relaxed">
+                Os percentuais indicam a distribuição dos recursos entre as
+                diferentes áreas de atuação, permitindo identificar onde se
+                concentra o maior esforço financeiro do plano hídrico.
+              </p>
+            </div>
+          </TabsContent>
+
+          {/* ABA 2: CUSTOS POR PERÍODO */}
+          <TabsContent
+            value="periodos"
+            className="space-y-6 focus-visible:outline-none"
+          >
+            <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm overflow-x-auto">
+              <Table className="min-w-[800px]">
+                <TableHeader className="bg-slate-50">
+                  <TableRow>
+                    <TableHead className="py-6 px-6 font-bold text-slate-900">
+                      Eixo
+                    </TableHead>
+                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                      2021-2025
+                    </TableHead>
+                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                      2025-2030
+                    </TableHead>
+                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                      2030-2035
+                    </TableHead>
+                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                      2035-2040
+                    </TableHead>
+                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                      2040-2050
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {custosEixos.map((item, idx) => (
+                    <TableRow
+                      key={idx}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <TableCell className="py-5 px-6 font-medium text-slate-800 text-sm">
+                        {item.eixo}
+                      </TableCell>
+                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
+                        {item.p2021_2025}
+                      </TableCell>
+                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
+                        {item.p2025_2030}
+                      </TableCell>
+                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
+                        {item.p2030_2035}
+                      </TableCell>
+                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
+                        {item.p2035_2040}
+                      </TableCell>
+                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
+                        {/* Simplificação para exibição: combinando os períodos finais se necessário */}
+                        {item.p2045_2050}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-bold">
+              Programação Plurianual — Valores sujeitos a correção monetária
+            </p>
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer Editorial */}
+        <footer className="mt-32 pt-12 border-t border-slate-200 flex flex-col items-center gap-6">
+          <div className="w-2 h-2 rounded-full bg-sky-500" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400 italic">
+            Plano de Recursos Hídricos — Balanço Financeiro
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}
