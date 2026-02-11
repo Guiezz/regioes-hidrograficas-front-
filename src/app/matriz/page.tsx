@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+// 1. Troca de useSearchParams para useReservoir
+import { useReservoir } from "@/context/ReservoirContext";
 import { getMatriz } from "@/services/api";
 import {
   Table,
@@ -32,8 +33,8 @@ import {
 const ITEMS_PER_PAGE = 5;
 
 export default function MatrizPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  // 2. Acesso ao Contexto Global
+  const { selectedReservoir } = useReservoir();
 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +44,13 @@ export default function MatrizPage() {
 
   useEffect(() => {
     async function fetchData() {
+      // Só busca se houver um reservatório selecionado
+      if (!selectedReservoir) return;
+
       setLoading(true);
       try {
-        const res = await getMatriz(Number(basinId));
+        // 3. Usa o ID dinâmico do reservatório selecionado
+        const res = await getMatriz(selectedReservoir.id);
         setData(res || []);
       } catch (error) {
         console.error("Erro ao carregar matriz:", error);
@@ -54,7 +59,7 @@ export default function MatrizPage() {
       }
     }
     fetchData();
-  }, [basinId]);
+  }, [selectedReservoir]); // 4. Dependência atualizada
 
   // Resetar página quando os filtros mudarem
   useEffect(() => {
@@ -132,7 +137,10 @@ export default function MatrizPage() {
             <div className="flex items-center gap-2 text-slate-400 font-medium">
               <MapPin className="w-4 h-4 text-blue-500" />
               <span className="text-sm tracking-wide">
-                Região Hidrográfica do Curu
+                {/* 5. Nome dinâmico */}
+                {selectedReservoir?.name
+                  ? `Região Hidrográfica do ${selectedReservoir.name}`
+                  : "Carregando..."}
               </span>
             </div>
           </div>

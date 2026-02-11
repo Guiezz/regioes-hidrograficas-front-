@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+// 1. Troca de useSearchParams para useReservoir
+import { useReservoir } from "@/context/ReservoirContext";
 import { getRadarData, getConsolidated } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, PieChart, Target, Activity } from "lucide-react";
@@ -22,8 +23,8 @@ interface RadarItem {
 }
 
 export default function IndicadoresPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  // 2. Acesso ao Contexto Global
+  const { selectedReservoir } = useReservoir();
 
   const [chartData, setChartData] = useState<RadarItem[]>([]);
   const [consolidated, setConsolidated] = useState<any>(null);
@@ -32,33 +33,35 @@ export default function IndicadoresPage() {
 
   useEffect(() => {
     async function loadData() {
+      // Só busca se houver um reservatório selecionado
+      if (!selectedReservoir) return;
+
       setLoading(true);
       try {
-        // Buscamos em paralelo: Dados do Gráfico (Radar) e Dados Consolidados (Total/Índice)
+        // 3. Usa o ID dinâmico do reservatório selecionado
         const [radarRes, consolidatedRes] = await Promise.all([
-          getRadarData(Number(basinId)),
-          getConsolidated(Number(basinId)),
+          getRadarData(selectedReservoir.id),
+          getConsolidated(selectedReservoir.id),
         ]);
 
-        // 1. Processar dados do Radar (Objeto -> Array)
-        // O backend retorna: { "Estrutural": 20, "Gestão": 8, ... }
+        // Processar dados do Radar (Objeto -> Array)
         const formattedRadar = Object.entries(radarRes || {})
           .map(([category, value]) => ({
             category,
             value: Number(value),
           }))
-          .sort((a, b) => b.value - a.value); // Ordena para melhor visualização
+          .sort((a, b) => b.value - a.value);
 
         setChartData(formattedRadar);
 
-        // 2. Calcula o total de ações somando todos os valores do radar
+        // Calcula o total de ações
         const total = Object.values(radarRes || {}).reduce(
           (acc: number, val) => acc + (Number(val) || 0),
           0,
         );
         setTotalActions(total);
 
-        // 3. Salvar dados consolidados (Índice Global, etc)
+        // Salvar dados consolidados
         setConsolidated(consolidatedRes);
       } catch (error) {
         console.error("Erro ao carregar indicadores:", error);
@@ -67,19 +70,11 @@ export default function IndicadoresPage() {
       }
     }
     loadData();
-  }, [basinId]);
+  }, [selectedReservoir]); // 4. Dependência atualizada
 
-  const getBasinName = (id: string) => {
-    const names: Record<string, string> = {
-      "1": "Curu",
-      "2": "Salgado",
-      "3": "Metropolitana",
-    };
-    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
-  };
+  // Função getBasinName removida
 
-  // Calcula a média global formatada (0.45 -> 45.0%)
-  // O backend envia 0 a 1, então multiplicamos por 100
+  // Calcula a média global formatada
   const globalIndex = consolidated?.indice_global
     ? (consolidated.indice_global * 100).toFixed(1)
     : "0.0";
@@ -87,7 +82,12 @@ export default function IndicadoresPage() {
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+          <span className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase italic">
+            Calculando Indicadores
+          </span>
+        </div>
       </div>
     );
   }
@@ -112,7 +112,10 @@ export default function IndicadoresPage() {
               <div className="flex items-center gap-2 text-slate-400">
                 <Target className="w-4 h-4 text-violet-500" />
                 <span className="text-sm font-medium italic">
-                  {getBasinName(basinId)}
+                  {/* 5. Nome dinâmico */}
+                  {selectedReservoir?.name
+                    ? `Região Hidrográfica do ${selectedReservoir.name}`
+                    : "Carregando..."}
                 </span>
               </div>
             </div>
@@ -173,7 +176,7 @@ export default function IndicadoresPage() {
           </div>
 
           {/* Gráfico Radar (Direita) */}
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 p-8 flex flex-col min-h-[600px]">
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 p-8 flex flex-col min-h-600px">
             <div className="flex items-center justify-between mb-8">
               <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
                 Distribuição por Volume (Pesos)
@@ -183,7 +186,7 @@ export default function IndicadoresPage() {
               </span>
             </div>
 
-            <div className="flex-1 w-full min-h-[500px]">
+            <div className="flex-1 w-full min-h-500px">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart

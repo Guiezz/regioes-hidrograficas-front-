@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useReservoir } from "@/context/ReservoirContext";
 import { getActions } from "@/services/api";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,6 @@ const PRAZOS = {
   longo: { inicio: 2044, fim: 2053 },
 };
 
-// Verifica se um intervalo de anos intercepta outro
 const intersects = (
   start: number,
   end: number,
@@ -49,8 +48,7 @@ const intersects = (
 };
 
 export default function PlanosAcaoPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  const { selectedReservoir } = useReservoir();
 
   const [actions, setActions] = useState<any[]>([]);
   const [filtersData, setFiltersData] = useState<any>({
@@ -68,22 +66,21 @@ export default function PlanosAcaoPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Helpers de Data
-  // --- Definição oficial dos prazos ---
-
   useEffect(() => {
     async function loadInitialData() {
+      if (!selectedReservoir) return;
+
       setLoading(true);
       const baseUrl =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
       try {
         const filtersRes = await axios.get(
-          `${baseUrl}/actions/filters?basin_id=${basinId}`,
+          `${baseUrl}/actions/filters?basin_id=${selectedReservoir.id}`,
         );
         setFiltersData(filtersRes.data);
 
-        const actionsData = await getActions(Number(basinId), {
+        const actionsData = await getActions(selectedReservoir.id, {
           eixo: selectedEixo === "todos" ? "" : selectedEixo,
           tipologia: selectedTipo === "todos" ? "" : selectedTipo,
         });
@@ -106,7 +103,6 @@ export default function PlanosAcaoPage() {
               PRAZOS.curto.fim,
             );
           }
-
           if (selectedCrono === "Médio Prazo") {
             return intersects(
               start,
@@ -115,7 +111,6 @@ export default function PlanosAcaoPage() {
               PRAZOS.medio.fim,
             );
           }
-
           if (selectedCrono === "Longo Prazo") {
             return intersects(
               start,
@@ -124,7 +119,6 @@ export default function PlanosAcaoPage() {
               PRAZOS.longo.fim,
             );
           }
-
           return true;
         });
 
@@ -136,35 +130,27 @@ export default function PlanosAcaoPage() {
       }
     }
     loadInitialData();
-  }, [basinId, selectedEixo, selectedTipo, selectedCrono]);
+  }, [selectedReservoir, selectedEixo, selectedTipo, selectedCrono]);
 
   const getTimelineLabel = (start: number, end: number) => {
     if (!start) return "N/A";
-
     const labels: string[] = [];
-
-    if (intersects(start, end, PRAZOS.curto.inicio, PRAZOS.curto.fim)) {
+    if (intersects(start, end, PRAZOS.curto.inicio, PRAZOS.curto.fim))
       labels.push("Curto");
-    }
-    if (intersects(start, end, PRAZOS.medio.inicio, PRAZOS.medio.fim)) {
+    if (intersects(start, end, PRAZOS.medio.inicio, PRAZOS.medio.fim))
       labels.push("Médio");
-    }
-    if (intersects(start, end, PRAZOS.longo.inicio, PRAZOS.longo.fim)) {
+    if (intersects(start, end, PRAZOS.longo.inicio, PRAZOS.longo.fim))
       labels.push("Longo");
-    }
-
     return labels.length ? `${labels.join(" / ")} Prazo` : "N/A";
   };
 
   const formatBudgetWithUnit = (item: any) => {
     const value = Number(item.total_budget || 0);
     const unit = item.budget_unit || "Global";
-
     const formatted = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(value);
-
     return unit === "Global"
       ? formatted
       : `${formatted} / ${unit.toLowerCase()}`;
@@ -175,15 +161,6 @@ export default function PlanosAcaoPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
-
-  const getBasinName = (id: string) => {
-    const names: Record<string, string> = {
-      "1": "Curu",
-      "2": "Salgado",
-      "3": "Metropolitana",
-    };
-    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
-  };
 
   if (loading) {
     return (
@@ -201,7 +178,6 @@ export default function PlanosAcaoPage() {
   return (
     <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
       <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
-        {/* HEADER ATUALIZADO COM O NOVO TEXTO E LAYOUT EM GRID */}
         <header className="mb-16 space-y-8">
           <Badge
             variant="outline"
@@ -218,7 +194,9 @@ export default function PlanosAcaoPage() {
               <div className="flex items-center gap-2 text-slate-400">
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium italic">
-                  {getBasinName(basinId)}
+                  {selectedReservoir?.name
+                    ? `Região Hidrográfica do ${selectedReservoir.name}`
+                    : "Carregando..."}
                 </span>
               </div>
             </div>
@@ -226,16 +204,14 @@ export default function PlanosAcaoPage() {
             <p className="text-slate-600 text-sm leading-relaxed text-justify lg:max-w-xl">
               Planos de Ação e Previsões de Investimentos estabelecem diretrizes
               para a implementação das iniciativas na região, garantindo a
-              execução eficiente das estratégias propostas. Esses planos definem
-              prazos, responsabilidades e fontes de financiamento para ações
-              prioritárias, assegurando o uso sustentável dos recursos hídricos.
+              execução eficiente das estratégias propostas.
             </p>
           </div>
         </header>
 
         {/* Filtros */}
         <section className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-wrap items-end gap-6">
-          {/* Filtro: Eixo */}
+          {/* Filtro: Eixo - CORRIGIDO PARA USAR .eixos */}
           <div className="space-y-1.5 w-55">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Eixo
@@ -252,6 +228,7 @@ export default function PlanosAcaoPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Eixos</SelectItem>
+                {/* AQUI ESTAVA O ERRO: axis_name -> eixos */}
                 {filtersData.eixos?.map((opt: string) => (
                   <SelectItem key={opt} value={opt}>
                     {opt}
@@ -261,7 +238,6 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          {/* Filtro: Tipologia */}
           <div className="space-y-1.5 w-45">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Tipologia
@@ -287,7 +263,6 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          {/* Filtro: Cronograma */}
           <div className="space-y-1.5 flex-1 min-w-50">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Cronograma (Prazo)
@@ -304,20 +279,13 @@ export default function PlanosAcaoPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Prazos</SelectItem>
-                <SelectItem value="Curto Prazo">
-                  Curto Prazo (até 2033)
-                </SelectItem>
-                <SelectItem value="Médio Prazo">
-                  Médio Prazo (2034 - 2043)
-                </SelectItem>
-                <SelectItem value="Longo Prazo">
-                  Longo Prazo (após 2043)
-                </SelectItem>
+                <SelectItem value="Curto Prazo">Curto Prazo</SelectItem>
+                <SelectItem value="Médio Prazo">Médio Prazo</SelectItem>
+                <SelectItem value="Longo Prazo">Longo Prazo</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Botão Limpar */}
           <Button
             variant="ghost"
             onClick={() => {
@@ -417,7 +385,6 @@ export default function PlanosAcaoPage() {
             </Table>
           </div>
 
-          {/* Paginação */}
           <div className="bg-slate-50/50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               Pág. {currentPage} / {totalPages || 1}
@@ -447,7 +414,6 @@ export default function PlanosAcaoPage() {
           </div>
         </div>
 
-        {/* Rodapé Totalizador */}
         <footer className="mt-12 flex flex-col md:flex-row justify-between items-center bg-slate-900 rounded-2xl p-10 text-white">
           <div className="space-y-1">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">

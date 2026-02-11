@@ -29,9 +29,30 @@ export interface ActionsFilters {
   tipologia?: string;
 }
 
+export interface Basin {
+  ID: number;
+  Name: string;
+}
+
 /**
  * Funções de Serviço
  */
+
+export const getBasins = async () => {
+  const response = await api.get<Basin[]>("/basins");
+  return response.data;
+};
+
+export const getBasinById = async (id: string) => {
+  const response = await api.get<Basin>(`/basins/${id}`);
+  return response.data;
+};
+
+export interface ReservoirData {
+  id: number;
+  name: string;
+  // Adicione outros campos que o backend retorna se necessário
+}
 
 // Busca as ações com filtros (usando a instância api)
 export async function getActions(basinId = 1, filters?: ActionsFilters) {
@@ -52,6 +73,20 @@ export async function getActions(basinId = 1, filters?: ActionsFilters) {
     return [];
   }
 }
+
+// ... imports
+
+// Substitua a função getReservoirs antiga por esta:
+export const getReservoirs = async (): Promise<ReservoirData[]> => {
+  try {
+    // Usa a instância 'api' (axios) para aproveitar a baseURL configurada
+    const response = await api.get<ReservoirData[]>("/basins");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar reservatórios:", error);
+    return [];
+  }
+};
 
 // Dados do gráfico Radar
 export async function getRadarData(basinId = 1) {

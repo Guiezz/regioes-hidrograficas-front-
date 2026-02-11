@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+// 1. Troca de useSearchParams para useReservoir
+import { useReservoir } from "@/context/ReservoirContext";
 import Image from "next/image";
 import { getSections } from "@/services/api";
 import { Loader2, MapPin } from "lucide-react";
@@ -16,17 +17,23 @@ interface Section {
 }
 
 export default function MetodologiaPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  // 2. Acesso ao Contexto Global
+  const { selectedReservoir } = useReservoir();
 
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      // Só busca se houver um reservatório selecionado
+      if (!selectedReservoir) return;
+
       setLoading(true);
       try {
-        const data = await getSections(Number(basinId));
+        // 3. Usa o ID dinâmico do reservatório selecionado
+        const data = await getSections(selectedReservoir.id);
+
+        // Filtra capitulo 2 (Metodologia)
         const metodologiaSections = data
           .filter((s: Section) => s.number.startsWith("2"))
           .sort((a: Section, b: Section) =>
@@ -41,7 +48,7 @@ export default function MetodologiaPage() {
       }
     }
     fetchData();
-  }, [basinId]);
+  }, [selectedReservoir]); // 4. Dependência atualizada
 
   const renderContent = (text: string) => {
     if (!text) return null;
@@ -62,18 +69,7 @@ export default function MetodologiaPage() {
     return `${baseUrl}/assets/${imageName}`;
   };
 
-  const getBasinName = (id: string) => {
-    switch (id) {
-      case "1":
-        return "Região Hidrográfica do Curu";
-      case "2":
-        return "Região Hidrográfica do Salgado";
-      case "3":
-        return "Região Metropolitana";
-      default:
-        return "Região Hidrográfica";
-    }
-  };
+  // Função getBasinName removida
 
   if (loading) {
     return (
@@ -110,7 +106,10 @@ export default function MetodologiaPage() {
             <div className="flex items-center gap-2 text-slate-400 font-medium">
               <MapPin className="w-4 h-4 text-sky-500" />
               <span className="text-sm tracking-wide">
-                {getBasinName(basinId)}
+                {/* 5. Nome dinâmico */}
+                {selectedReservoir?.name
+                  ? `Região Hidrográfica do ${selectedReservoir.name}`
+                  : "Carregando..."}
               </span>
             </div>
           </div>

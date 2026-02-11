@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { ReservoirSelector } from "@/components/layout/ReservoirSelector";
 import {
   Select,
   SelectContent,
@@ -29,16 +30,7 @@ export function Header() {
           Região:
         </span>
         <div className="w-45 md:w-60">
-          <Select value={currentBasin} onValueChange={handleBasinChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a bacia" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Curu</SelectItem>
-              <SelectItem value="2">Salgado</SelectItem>
-              <SelectItem value="3">Metropolitana</SelectItem>
-            </SelectContent>
-          </Select>
+          <ReservoirSelector />
         </div>
       </div>
     </div>

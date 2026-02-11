@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useReservoir } from "@/context/ReservoirContext";
 import { getActions } from "@/services/api";
 import axios from "axios";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,6 @@ const PRAZOS = {
   longo: { inicio: 2044, fim: 2053 },
 };
 
-// Verifica se um intervalo intercepta um prazo
 const intersects = (
   start: number,
   end: number,
@@ -50,8 +49,7 @@ const intersects = (
 };
 
 export default function MonitoramentoPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  const { selectedReservoir } = useReservoir();
 
   const [actions, setActions] = useState<any[]>([]);
   const [filtersData, setFiltersData] = useState<any>({
@@ -68,22 +66,21 @@ export default function MonitoramentoPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Helpers de Data
-  // --- Definição oficial dos prazos ---
-
   useEffect(() => {
     async function loadInitialData() {
+      if (!selectedReservoir) return;
+
       setLoading(true);
       const baseUrl =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
       try {
         const filtersRes = await axios.get(
-          `${baseUrl}/actions/filters?basin_id=${basinId}`,
+          `${baseUrl}/actions/filters?basin_id=${selectedReservoir.id}`,
         );
         setFiltersData(filtersRes.data);
 
-        const actionsData = await getActions(Number(basinId), {
+        const actionsData = await getActions(selectedReservoir.id, {
           eixo: selectedEixo === "todos" ? "" : selectedEixo,
           tipologia: selectedTipo === "todos" ? "" : selectedTipo,
         });
@@ -107,7 +104,6 @@ export default function MonitoramentoPage() {
               PRAZOS.curto.fim,
             );
           }
-
           if (selectedCrono === "Médio Prazo") {
             return intersects(
               start,
@@ -116,7 +112,6 @@ export default function MonitoramentoPage() {
               PRAZOS.medio.fim,
             );
           }
-
           if (selectedCrono === "Longo Prazo") {
             return intersects(
               start,
@@ -125,7 +120,6 @@ export default function MonitoramentoPage() {
               PRAZOS.longo.fim,
             );
           }
-
           return true;
         });
 
@@ -137,9 +131,8 @@ export default function MonitoramentoPage() {
       }
     }
     loadInitialData();
-  }, [basinId, selectedEixo, selectedTipo, selectedCrono]);
+  }, [selectedReservoir, selectedEixo, selectedTipo, selectedCrono]);
 
-  // Função para extrair IEA
   const getLatestIEARel = (item: any) => {
     if (!item.measurements || item.measurements.length === 0) return null;
     const lastMeasurement = item.measurements[item.measurements.length - 1];
@@ -156,42 +149,28 @@ export default function MonitoramentoPage() {
 
   const getTimelineLabel = (start: number, end: number) => {
     if (!start) return "N/A";
-
     const labels: string[] = [];
-
-    if (intersects(start, end, PRAZOS.curto.inicio, PRAZOS.curto.fim)) {
+    if (intersects(start, end, PRAZOS.curto.inicio, PRAZOS.curto.fim))
       labels.push("Curto");
-    }
-    if (intersects(start, end, PRAZOS.medio.inicio, PRAZOS.medio.fim)) {
+    if (intersects(start, end, PRAZOS.medio.inicio, PRAZOS.medio.fim))
       labels.push("Médio");
-    }
-    if (intersects(start, end, PRAZOS.longo.inicio, PRAZOS.longo.fim)) {
+    if (intersects(start, end, PRAZOS.longo.inicio, PRAZOS.longo.fim))
       labels.push("Longo");
-    }
-
     return labels.join(" / ") + " Prazo";
   };
 
-  // Paginação
   const totalPages = Math.ceil(actions.length / itemsPerPage);
   const currentItems = actions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
-  const getBasinName = (id: string) => {
-    const names: Record<string, string> = {
-      "1": "Curu",
-      "2": "Salgado",
-      "3": "Metropolitana",
-    };
-    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
-  };
-
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        </div>
       </div>
     );
   }
@@ -199,7 +178,6 @@ export default function MonitoramentoPage() {
   return (
     <div className="min-h-screen bg-white selection:bg-emerald-100 selection:text-emerald-900">
       <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
-        {/* HEADER */}
         <header className="mb-16 space-y-8">
           <Badge
             variant="outline"
@@ -216,7 +194,9 @@ export default function MonitoramentoPage() {
               <div className="flex items-center gap-2 text-slate-400">
                 <Target className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm font-medium italic">
-                  {getBasinName(basinId)}
+                  {selectedReservoir?.name
+                    ? `Região Hidrográfica do ${selectedReservoir.name}`
+                    : "Carregando..."}
                 </span>
               </div>
             </div>
@@ -229,10 +209,8 @@ export default function MonitoramentoPage() {
           </div>
         </header>
 
-        {/* --- ÁREA DE FILTROS ORGANIZADA (GRID) --- */}
         <section className="mb-8 p-6 rounded-2xl bg-emerald-50/30 border border-emerald-100/50">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
-            {/* Filtro: Eixo */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
                 <LayoutList className="w-3 h-3 inline mr-1 mb-0.5" /> Eixo
@@ -250,6 +228,7 @@ export default function MonitoramentoPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos os Eixos</SelectItem>
+                  {/* CORREÇÃO AQUI TAMBÉM GARANTIDA */}
                   {filtersData.eixos?.map((opt: string) => (
                     <SelectItem key={opt} value={opt}>
                       {opt}
@@ -259,7 +238,6 @@ export default function MonitoramentoPage() {
               </Select>
             </div>
 
-            {/* Filtro: Cronograma */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
                 Cronograma
@@ -283,7 +261,6 @@ export default function MonitoramentoPage() {
               </Select>
             </div>
 
-            {/* Filtro: Tipologia */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
                 Tipologia da Ação
@@ -309,7 +286,6 @@ export default function MonitoramentoPage() {
               </Select>
             </div>
 
-            {/* Botão Limpar */}
             <Button
               variant="outline"
               onClick={() => {
@@ -324,14 +300,12 @@ export default function MonitoramentoPage() {
           </div>
         </section>
 
-        {/* --- TABELA OTIMIZADA --- */}
+        {/* Tabela */}
         <div className="rounded-xl border border-slate-200 shadow-xl shadow-slate-200/20 bg-white overflow-hidden mb-16">
           <div className="overflow-x-auto">
-            {/* Adicionado 'table-fixed' e 'min-w' para garantir layout estável */}
             <Table className="w-full table-fixed min-w-250">
               <TableHeader className="bg-slate-50/80 border-b border-slate-100">
                 <TableRow>
-                  {/* Larguras Fixas Definidas */}
                   <TableHead className="w-[40%] py-4 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Ação Estratégica / Descrição
                   </TableHead>
@@ -358,12 +332,10 @@ export default function MonitoramentoPage() {
                         key={item.id}
                         className="hover:bg-slate-50/50 transition-colors border-slate-100"
                       >
-                        {/* Coluna Ação: Quebra de texto forçada */}
                         <TableCell className="px-6 py-5 align-top">
                           <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider mb-2">
                             {item.axis_name}
                           </div>
-                          {/* break-words e whitespace-normal garantem a quebra */}
                           <p className="text-sm font-medium text-slate-700 leading-relaxed text-justify whitespace-normal wrap-break-word">
                             {item.description}
                           </p>
@@ -392,7 +364,6 @@ export default function MonitoramentoPage() {
                           </div>
                         </TableCell>
 
-                        {/* IEA Relativo Destacado */}
                         <TableCell className="px-6 py-5 align-top text-center">
                           {ieaRel !== null ? (
                             <div className="inline-flex items-center justify-center min-w-12 py-1 rounded-md bg-emerald-50 text-emerald-700 font-mono font-bold text-sm border border-emerald-100 shadow-sm">
@@ -406,7 +377,6 @@ export default function MonitoramentoPage() {
                         </TableCell>
 
                         <TableCell className="px-6 py-5 align-top text-right">
-                          {/* Status Placeholder Mais Bonito */}
                           <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
@@ -439,7 +409,6 @@ export default function MonitoramentoPage() {
             </Table>
           </div>
 
-          {/* Paginação */}
           <div className="bg-slate-50/80 border-t border-slate-200 px-6 py-4 flex items-center justify-between backdrop-blur-sm">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               Pág. {currentPage} / {totalPages || 1}
@@ -469,7 +438,6 @@ export default function MonitoramentoPage() {
           </div>
         </div>
 
-        {/* SEÇÃO FUTURA */}
         <section className="border-t border-slate-200 pt-12 opacity-80 hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-blue-50 rounded-lg text-blue-600 shadow-sm border border-blue-100">

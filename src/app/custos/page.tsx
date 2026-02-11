@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+// Removido useSearchParams, adicionado useReservoir
+import { useReservoir } from "@/context/ReservoirContext";
 import { getCustos } from "@/services/api";
 import {
   Table,
@@ -13,27 +14,24 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  MapPin,
-  DollarSign,
-  Calendar,
-  PieChart,
-  Info,
-} from "lucide-react";
+import { Loader2, MapPin, Calendar, PieChart, Info } from "lucide-react";
 
 export default function CustosPage() {
-  const searchParams = useSearchParams();
-  const basinId = searchParams.get("basin_id") || "1";
+  // 1. Acesso ao Contexto Global em vez de ler a URL manualmente
+  const { selectedReservoir } = useReservoir();
 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
+      // Só busca se houver um reservatório selecionado no contexto
+      if (!selectedReservoir) return;
+
       setLoading(true);
       try {
-        const res = await getCustos(Number(basinId));
+        // 2. Usa o ID dinâmico do reservatório selecionado
+        const res = await getCustos(selectedReservoir.id);
         setData(res || []);
       } catch (error) {
         console.error("Erro ao carregar custos:", error);
@@ -42,16 +40,9 @@ export default function CustosPage() {
       }
     }
     fetchData();
-  }, [basinId]);
+  }, [selectedReservoir]); // Recarrega sempre que o usuário trocar a bacia no seletor
 
-  const getBasinName = (id: string) => {
-    const names: Record<string, string> = {
-      "1": "Curu",
-      "2": "Salgado",
-      "3": "Metropolitana",
-    };
-    return `Região Hidrográfica do ${names[id] || "Hidrográfica"}`;
-  };
+  // Função getBasinName removida pois agora usamos selectedReservoir.name
 
   if (loading) {
     return (
@@ -92,7 +83,10 @@ export default function CustosPage() {
             <div className="flex items-center gap-2 text-slate-400 font-medium">
               <MapPin className="w-4 h-4 text-blue-500" />
               <span className="text-sm tracking-wide">
-                {getBasinName(basinId)}
+                {/* 3. Nome dinâmico vindo da API/Contexto */}
+                {selectedReservoir?.name
+                  ? `Região Hidrográfica do ${selectedReservoir.name}`
+                  : "Carregando..."}
               </span>
             </div>
           </div>
@@ -146,7 +140,7 @@ export default function CustosPage() {
                     <TableHead className="py-6 px-6 font-bold text-slate-900 text-right">
                       Valor Total
                     </TableHead>
-                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-center w-[120px]">
+                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-center w-30">
                       Percentual
                     </TableHead>
                   </TableRow>
@@ -202,7 +196,7 @@ export default function CustosPage() {
             className="space-y-6 focus-visible:outline-none"
           >
             <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm overflow-x-auto">
-              <Table className="min-w-[800px]">
+              <Table className="min-w-200">
                 <TableHeader className="bg-slate-50">
                   <TableRow>
                     <TableHead className="py-6 px-6 font-bold text-slate-900">
