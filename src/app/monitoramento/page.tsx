@@ -437,28 +437,9 @@ export default function MonitoramentoPage() {
             </div>
           </div>
         </div>
-
-        <section className="border-t border-slate-200 pt-12 opacity-80 hover:opacity-100 transition-opacity">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600 shadow-sm border border-blue-100">
-              <FileBarChart className="w-5 h-5" />
-            </div>
-            <h2 className="text-lg font-bold text-slate-800">
-              Indicadores Consolidados
-            </h2>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-12 text-center group hover:bg-slate-50 transition-colors cursor-default">
-            <BarChart3 className="w-10 h-10 text-slate-300 mx-auto mb-3 group-hover:text-emerald-400 transition-colors" />
-            <h3 className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">
-              Módulo em Desenvolvimento
-            </h3>
-            <p className="text-slate-400 text-xs max-w-sm mx-auto">
-              A visualização detalhada de indicadores por sub-bacia será
-              disponibilizada na próxima versão.
-            </p>
-          </div>
-        </section>
+        <footer className="mt-20 pt-8 border-t border-slate-200 flex flex-col items-center gap-4 text-center">
+          <div className="w-2 h-2 rounded-full bg-sky-500" />
+        </footer>
       </div>
     </div>
   );

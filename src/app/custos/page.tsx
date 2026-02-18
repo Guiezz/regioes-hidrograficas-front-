@@ -258,9 +258,6 @@ export default function CustosPage() {
         {/* Footer Editorial */}
         <footer className="mt-32 pt-12 border-t border-slate-200 flex flex-col items-center gap-6">
           <div className="w-2 h-2 rounded-full bg-sky-500" />
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400 italic">
-            Plano de Recursos Hídricos — Balanço Financeiro
-          </p>
         </footer>
       </div>
     </div>
