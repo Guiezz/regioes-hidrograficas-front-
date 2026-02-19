@@ -156,7 +156,6 @@ export default function MatrizPage() {
           </p>
         </header>
 
-        {/* Filtros com padding adaptado para mobile */}
         {/* Filtros */}
         <section className="mb-12 mx-4 md:mx-0 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 border border-slate-100 w-[calc(100%-2rem)] md:w-full items-end">
           {/* Filtro Tipo de Matriz */}
@@ -169,7 +168,7 @@ export default function MatrizPage() {
               <SelectTrigger className="bg-white border-slate-200 w-full h-10 [&>span]:truncate">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
-              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-[400px]">
+              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-100">
                 <SelectItem value="all">Todos os Tipos</SelectItem>
                 {tiposMatriz.map((tipo) => (
                   <SelectItem key={tipo} value={tipo} className="truncate">
@@ -189,7 +188,7 @@ export default function MatrizPage() {
               <SelectTrigger className="bg-white border-slate-200 w-full h-10 [&>span]:truncate">
                 <SelectValue placeholder="Selecione o programa" />
               </SelectTrigger>
-              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-[400px]">
+              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-100">
                 <SelectItem value="all">Todos os Programas</SelectItem>
                 {programas.map((prog) => (
                   <SelectItem key={prog} value={prog} className="truncate">
