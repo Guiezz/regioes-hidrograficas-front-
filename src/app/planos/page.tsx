@@ -201,7 +201,7 @@ export default function PlanosAcaoPage() {
               </div>
             </div>
 
-            <p className="text-slate-600 text-sm leading-relaxed text-justify lg:max-w-xl">
+            <p className="text-slate-600 text-sm leading-relaxed text-justify max-w-93 lg:max-w-xl">
               Planos de Ação e Previsões de Investimentos estabelecem diretrizes
               para a implementação das iniciativas na região, garantindo a
               execução eficiente das estratégias propostas.
@@ -210,9 +210,8 @@ export default function PlanosAcaoPage() {
         </header>
 
         {/* Filtros */}
-        <section className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-wrap items-end gap-6">
-          {/* Filtro: Eixo - CORRIGIDO PARA USAR .eixos */}
-          <div className="space-y-1.5 w-55">
+        <section className="mb-8 py-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col md:flex-row md:flex-wrap items-start md:items-end w-93 xl:w-full gap-6">
+          <div className="space-y-1.5 w-full md:w-56">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Eixo
             </label>
@@ -228,7 +227,6 @@ export default function PlanosAcaoPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Eixos</SelectItem>
-                {/* AQUI ESTAVA O ERRO: axis_name -> eixos */}
                 {filtersData.eixos?.map((opt: string) => (
                   <SelectItem key={opt} value={opt}>
                     {opt}
@@ -238,7 +236,7 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          <div className="space-y-1.5 w-45">
+          <div className="space-y-1.5 w-full md:w-48">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Tipologia
             </label>
@@ -263,7 +261,7 @@ export default function PlanosAcaoPage() {
             </Select>
           </div>
 
-          <div className="space-y-1.5 flex-1 min-w-50">
+          <div className="space-y-1.5 w-full md:flex-1 md:min-w-[200px]">
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
               Cronograma (Prazo)
             </label>
@@ -293,35 +291,37 @@ export default function PlanosAcaoPage() {
               setSelectedTipo("todos");
               setSelectedCrono("todos");
             }}
-            className="text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase ml-auto"
+            className="w-full md:w-auto text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase md:ml-auto mt-2 md:mt-0"
           >
             <X className="w-3 h-3 mr-2" /> Limpar Filtros
           </Button>
         </section>
-
-        {/* Tabela de Resultados */}
-        <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table className="w-full table-fixed min-w-300">
-              <TableHeader className="bg-slate-50/80">
+        
+        <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white flex flex-col">
+          {/* Área de scroll: horizontal + vertical */}
+          <div className="overflow-x-auto overflow-y-auto max-h-[480px]">
+            <Table className="w-full table-fixed min-w-[700px]">
+              {/* Header sticky dentro da área de scroll */}
+              <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
                 <TableRow className="border-slate-200">
-                  <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                  <TableHead className="w-[20%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Eixo / Programa
                   </TableHead>
-                  <TableHead className="w-[30%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                  <TableHead className="w-[32%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Ação Estratégica
                   </TableHead>
-                  <TableHead className="w-[20%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                  <TableHead className="w-[20%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Responsável
                   </TableHead>
-                  <TableHead className="w-[15%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">
+                  <TableHead className="w-[14%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">
                     Investimento
                   </TableHead>
-                  <TableHead className="w-[15%] py-5 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
+                  <TableHead className="w-[14%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
                     Prazo
                   </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {currentItems.length > 0 ? (
                   currentItems.map((item) => (
@@ -329,43 +329,55 @@ export default function PlanosAcaoPage() {
                       key={item.id}
                       className="border-slate-100 hover:bg-blue-50/30 transition-colors"
                     >
-                      <TableCell className="px-6 py-6 align-top">
-                        <div className="text-[9px] font-black text-blue-600 uppercase tracking-wider mb-1">
+                      {/* Eixo / Programa
+                          break-words: quebra palavras longas dentro da célula
+                          hyphens-auto: adiciona hífen automático quando necessário */}
+                      <TableCell className="px-5 py-5 align-top">
+                        <div className="text-[9px] font-black text-blue-600 uppercase tracking-wider mb-1 break-words hyphens-auto">
                           {item.axis_name || "Eixo não definido"}
                         </div>
-                        <div className="font-bold text-slate-800 text-[11px] leading-tight whitespace-normal wrap-break-words mb-2">
+                        <div className="font-bold text-slate-800 text-[11px] leading-tight break-words hyphens-auto mb-2">
                           {item.program?.name || "Programa não definido"}
                         </div>
-                        <div className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter border border-slate-200 px-1.5 py-0.5 rounded">
-                          <Tag className="w-2.5 h-2.5" /> {item.typology}
+                        <div className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter border border-slate-200 px-1.5 py-0.5 rounded max-w-full">
+                          {/* shrink-0 no ícone impede que ele seja comprimido */}
+                          <Tag className="w-2.5 h-2.5 shrink-0" />
+                          {/* truncate corta a tipologia com "..." se for longa demais */}
+                          <span className="truncate">{item.typology}</span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-6 py-6 align-top">
+                      {/* Ação Estratégica — break-words para não vazar da célula */}
+                      <TableCell className="px-5 py-5 align-top">
                         <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-normal wrap-break-words">
                           {item.description}
                         </p>
                       </TableCell>
 
-                      <TableCell className="px-6 py-6 align-top">
-                        <div className="flex items-start gap-2 text-[12px] font-medium text-slate-600 whitespace-normal wrap-break-words leading-snug">
+                      {/* Responsável — ícone fixo + texto com quebra */}
+                      <TableCell className="px-5 py-5 align-top">
+                        <div className="flex items-start gap-2 text-[12px] font-medium text-slate-600 leading-snug">
                           <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                          <span>{item.source || "Órgão a definir"}</span>
+                          <span className="wrap-break-word whitespace-normal hyphens-auto">
+                            {item.source || "Órgão a definir"}
+                          </span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-6 py-6 text-right align-top font-mono font-bold text-slate-900 text-sm">
+                      {/* Investimento — whitespace-nowrap: valor monetário nunca quebra */}
+                      <TableCell className="px-5 py-5 text-right align-top font-mono font-bold text-slate-900 text-sm whitespace-nowrap">
                         {formatBudgetWithUnit(item)}
                       </TableCell>
 
-                      <TableCell className="px-6 py-6 align-top text-center">
+                      {/* Prazo — anos nunca quebram */}
+                      <TableCell className="px-5 py-5 align-top text-center">
                         <Badge
                           variant="secondary"
                           className="rounded-full bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-none px-3 mb-1"
                         >
                           {getTimelineLabel(item.start_year, item.end_year)}
                         </Badge>
-                        <div className="text-[10px] text-slate-400 font-mono tracking-tighter">
+                        <div className="text-[10px] text-slate-400 font-mono tracking-tighter whitespace-nowrap">
                           {item.start_year} — {item.end_year}
                         </div>
                       </TableCell>
@@ -385,6 +397,7 @@ export default function PlanosAcaoPage() {
             </Table>
           </div>
 
+          {/* Paginação — fora da área de scroll, sempre visível */}
           <div className="bg-slate-50/50 border-t border-slate-200 px-6 py-4 flex items-center justify-between">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
               Pág. {currentPage} / {totalPages || 1}
@@ -414,7 +427,7 @@ export default function PlanosAcaoPage() {
           </div>
         </div>
 
-        <footer className="mt-12 flex flex-col md:flex-row justify-between items-center bg-slate-900 rounded-2xl p-10 text-white">
+        <footer className="mt-12 flex flex-col md:flex-row justify-between items-center bg-slate-900 rounded-2xl p-10 xl:w-full w-[370px] text-white">
           <div className="space-y-1">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
               Aporte Total Estimado
