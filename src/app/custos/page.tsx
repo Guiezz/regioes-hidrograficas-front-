@@ -128,7 +128,7 @@ export default function CustosPage() {
           >
             <div className="rounded-2xl border border-slate-200 shadow-sm bg-white flex flex-col w-full max-w-[calc(100vw-4rem)] md:max-w-full overflow-hidden">
               <div className="overflow-x-auto w-full">
-                <Table className="w-full table-fixed min-w-[550px]">
+                <Table className="w-full table-fixed min-w-137.5">
                   <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
                     <TableRow>
                       <TableHead className="w-[40%] py-6 px-6 font-bold text-slate-900">
@@ -148,7 +148,7 @@ export default function CustosPage() {
                         key={idx}
                         className="group hover:bg-blue-50/30 border-slate-100"
                       >
-                        <TableCell className="py-6 px-6 font-semibold text-slate-700 whitespace-normal break-words hyphens-auto">
+                        <TableCell className="py-6 px-6 font-semibold text-slate-700 whitespace-normal wrap-break-word hyphens-auto">
                           {item.eixo}
                         </TableCell>
                         <TableCell className="py-6 px-6 text-right font-mono font-medium text-slate-900 whitespace-nowrap">
@@ -198,7 +198,7 @@ export default function CustosPage() {
           >
             <div className="rounded-2xl border border-slate-200 shadow-sm bg-white flex flex-col w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden">
               <div className="overflow-x-auto w-full">
-                <Table className="w-full table-fixed min-w-[850px]">
+                <Table className="w-full table-fixed min-w-212.5">
                   <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
                     <TableRow>
                       <TableHead className="w-[30%] py-6 px-6 font-bold text-slate-900">

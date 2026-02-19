@@ -72,8 +72,6 @@ export default function IndicadoresPage() {
     loadData();
   }, [selectedReservoir]); // 4. Dependência atualizada
 
-  // Função getBasinName removida
-
   // Calcula a média global formatada
   const globalIndex = consolidated?.indice_global
     ? (consolidated.indice_global * 100).toFixed(1)
@@ -94,7 +92,8 @@ export default function IndicadoresPage() {
 
   return (
     <div className="min-h-screen bg-white selection:bg-violet-100 selection:text-violet-900">
-      <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
+      {/* Respiro lateral ajustado com px-6 md:px-8 */}
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 lg:py-32">
         {/* HEADER */}
         <header className="mb-16 space-y-8">
           <Badge
@@ -112,7 +111,6 @@ export default function IndicadoresPage() {
               <div className="flex items-center gap-2 text-slate-400">
                 <Target className="w-4 h-4 text-violet-500" />
                 <span className="text-sm font-medium italic">
-                  {/* 5. Nome dinâmico */}
                   {selectedReservoir?.name
                     ? `Região Hidrográfica do ${selectedReservoir.name}`
                     : "Carregando..."}
@@ -132,9 +130,9 @@ export default function IndicadoresPage() {
         </header>
 
         {/* ÁREA DO GRÁFICO RADAR */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {/* Texto de Apoio e Métricas (Esquerda) */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 w-full">
             <div className="p-6 bg-violet-50 rounded-2xl border border-violet-100">
               <h3 className="text-violet-900 font-bold text-lg mb-4 flex items-center gap-2">
                 <Activity className="w-5 h-5" /> Performance Global
@@ -166,7 +164,7 @@ export default function IndicadoresPage() {
               </div>
             </div>
 
-            <div className="p-6 border border-dashed border-slate-200 rounded-2xl">
+            <div className="p-6 border border-dashed border-slate-200 rounded-2xl hidden md:block">
               <p className="text-slate-500 text-sm leading-relaxed text-justify">
                 Esta visualização permite identificar rapidamente o equilíbrio
                 entre as diferentes áreas de atuação (como Infraestrutura vs.
@@ -176,23 +174,24 @@ export default function IndicadoresPage() {
           </div>
 
           {/* Gráfico Radar (Direita) */}
-          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/50 p-8 flex flex-col min-h-600px">
-            <div className="flex items-center justify-between mb-8">
-              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">
-                Distribuição por Volume (Pesos)
+          {/* Correção do min-h-600px para min-h-[450px] md:min-h-[600px] e adição da trava w-full */}
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-4 md:p-8 flex flex-col min-h-112.5 md:min-h-150 w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">
+                Distribuição por Volume
               </h4>
-              <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded font-mono">
+              <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded font-mono w-fit mx-auto sm:mx-0">
                 Pontuação Acumulada
               </span>
             </div>
 
-            <div className="flex-1 w-full min-h-500px">
+            <div className="flex-1 w-full min-h-87.5 md:min-h-125">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart
                     cx="50%"
                     cy="50%"
-                    outerRadius="70%"
+                    outerRadius="65%" /* Reduzido levemente para caber os textos grandes no mobile */
                     data={chartData}
                   >
                     <PolarGrid stroke="#e2e8f0" strokeWidth={1.5} />
@@ -200,13 +199,12 @@ export default function IndicadoresPage() {
                       dataKey="category"
                       tick={{
                         fill: "#64748b",
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 500,
                       }}
                     />
                     <PolarRadiusAxis
                       angle={90}
-                      // Deixamos domain 'auto' pois os pesos podem variar muito entre bacias
                       domain={[0, "auto"]}
                       tick={{
                         fill: "#94a3b8",
@@ -236,7 +234,7 @@ export default function IndicadoresPage() {
                       }}
                     />
                     <Legend
-                      wrapperStyle={{ paddingTop: "20px", fontSize: "12px" }}
+                      wrapperStyle={{ paddingTop: "10px", fontSize: "12px" }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -253,6 +251,10 @@ export default function IndicadoresPage() {
             </div>
           </div>
         </div>
+
+        <footer className="mt-20 pt-8 border-t border-slate-200 flex flex-col items-center gap-4 text-center">
+          <div className="w-2 h-2 rounded-full bg-violet-400" />
+        </footer>
       </div>
     </div>
   );
