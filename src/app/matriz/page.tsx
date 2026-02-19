@@ -219,7 +219,7 @@ export default function MatrizPage() {
                     >
                       <TableCell className="px-5 py-5 align-top">
                         <div className="space-y-1">
-                          <p className="text-[15px] font-semibold text-slate-800 leading-snug whitespace-normal break-words hyphens-auto">
+                          <p className="text-[15px] font-semibold text-slate-800 leading-snug whitespace-normal wrap-break-word hyphens-auto">
                             {item.acoes_especificas}
                           </p>
                           <p className="text-[11px] text-blue-500 font-bold uppercase tracking-wider">
@@ -228,7 +228,7 @@ export default function MatrizPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-5 py-5 align-top">
-                        <p className="text-sm text-slate-600 leading-relaxed whitespace-normal break-words hyphens-auto">
+                        <p className="text-sm text-slate-600 leading-relaxed whitespace-normal wrap-break-word hyphens-auto">
                           {item.instituicoes_envolvidas}
                         </p>
                       </TableCell>

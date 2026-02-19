@@ -285,13 +285,13 @@ export default function PlanosAcaoPage() {
           </div>
 
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => {
               setSelectedEixo("todos");
               setSelectedTipo("todos");
               setSelectedCrono("todos");
             }}
-            className="w-full md:w-auto text-slate-400 hover:text-blue-600 font-bold text-[10px] uppercase md:ml-auto mt-2 md:mt-0"
+            className="w-full border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 h-10 uppercase text-[10px] font-bold tracking-widest"
           >
             <X className="w-3 h-3 mr-2" /> Limpar Filtros
           </Button>

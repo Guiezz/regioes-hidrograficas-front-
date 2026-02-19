@@ -25,11 +25,9 @@ import {
   Loader2,
   X,
   Activity,
-  BarChart3,
   ChevronLeft,
   ChevronRight,
   Target,
-  FileBarChart,
   LayoutList,
 } from "lucide-react";
 
@@ -177,7 +175,7 @@ export default function MonitoramentoPage() {
 
   return (
     <div className="min-h-screen bg-white selection:bg-emerald-100 selection:text-emerald-900">
-      <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 lg:py-32">
         <header className="mb-16 space-y-8">
           <Badge
             variant="outline"
@@ -201,7 +199,7 @@ export default function MonitoramentoPage() {
               </div>
             </div>
 
-            <p className="text-slate-600 text-sm leading-relaxed text-justify lg:max-w-xl">
+            <p className="text-slate-600 text-sm leading-relaxed text-justify max-w-xs lg:max-w-xl">
               Acompanhamento detalhado da execução dos Planos de Ação,
               permitindo a visualização de índices de desempenho e status
               atualizado das iniciativas estratégicas da região.
@@ -209,12 +207,13 @@ export default function MonitoramentoPage() {
           </div>
         </header>
 
-        <section className="mb-8 p-6 rounded-2xl bg-emerald-50/30 border border-emerald-100/50">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
+        {/* Filtros */}
+        <section className="mb-8 p-4 md:p-6 rounded-2xl bg-emerald-50/30 border border-emerald-100/50 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 items-end">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">
-                <LayoutList className="w-3 h-3 inline mr-1 mb-0.5" /> Eixo
-                Estratégico
+                <LayoutList className="w-3 h-3 inline mr-1 mb-0.5" />
+                Eixo Estratégico
               </label>
               <Select
                 value={selectedEixo}
@@ -228,7 +227,6 @@ export default function MonitoramentoPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos os Eixos</SelectItem>
-                  {/* CORREÇÃO AQUI TAMBÉM GARANTIDA */}
                   {filtersData.eixos?.map((opt: string) => (
                     <SelectItem key={opt} value={opt}>
                       {opt}
@@ -300,25 +298,25 @@ export default function MonitoramentoPage() {
           </div>
         </section>
 
-        {/* Tabela */}
-        <div className="rounded-xl border border-slate-200 shadow-xl shadow-slate-200/20 bg-white overflow-hidden mb-16">
-          <div className="overflow-x-auto">
-            <Table className="w-full table-fixed min-w-250">
-              <TableHeader className="bg-slate-50/80 border-b border-slate-100">
-                <TableRow>
-                  <TableHead className="w-[40%] py-4 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+        {/* Tabela com scroll responsivo */}
+        <div className="rounded-xl border border-slate-200 shadow-xl shadow-slate-200/20 bg-white flex flex-col w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden mb-16">
+          <div className="overflow-x-auto overflow-y-auto max-h-[480px] w-full">
+            <Table className="w-full table-fixed min-w-[850px]">
+              <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
+                <TableRow className="border-slate-100">
+                  <TableHead className="w-[35%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Ação Estratégica / Descrição
                   </TableHead>
-                  <TableHead className="w-[15%] py-4 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                  <TableHead className="w-[15%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
                     Classificação
                   </TableHead>
-                  <TableHead className="w-[15%] py-4 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
+                  <TableHead className="w-[15%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
                     Prazo
                   </TableHead>
-                  <TableHead className="w-[10%] py-4 px-6 text-[10px] font-black uppercase text-emerald-600 tracking-widest text-center">
+                  <TableHead className="w-[15%] py-4 px-5 text-[10px] font-black uppercase text-emerald-600 tracking-widest text-center">
                     IEA Rel.
                   </TableHead>
-                  <TableHead className="w-[20%] py-4 px-6 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">
+                  <TableHead className="w-[20%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">
                     Status Execução
                   </TableHead>
                 </TableRow>
@@ -332,11 +330,11 @@ export default function MonitoramentoPage() {
                         key={item.id}
                         className="hover:bg-slate-50/50 transition-colors border-slate-100"
                       >
-                        <TableCell className="px-6 py-5 align-top">
-                          <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider mb-2">
+                        <TableCell className="px-5 py-5 align-top">
+                          <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider mb-2 wrap-break-word hyphens-auto">
                             {item.axis_name}
                           </div>
-                          <p className="text-sm font-medium text-slate-700 leading-relaxed text-justify whitespace-normal wrap-break-word">
+                          <p className="text-sm font-medium text-slate-700 leading-relaxed text-justify whitespace-normal wrap-break-word hyphens-auto">
                             {item.description}
                           </p>
                           <span className="text-[9px] text-slate-300 mt-2 block font-mono select-none">
@@ -344,27 +342,27 @@ export default function MonitoramentoPage() {
                           </span>
                         </TableCell>
 
-                        <TableCell className="px-6 py-5 align-top">
+                        <TableCell className="px-5 py-5 align-top">
                           <Badge
                             variant="outline"
-                            className="font-bold text-[9px] border-slate-200 bg-slate-50 text-slate-600 whitespace-normal text-center"
+                            className="font-bold text-[9px] border-slate-200 bg-slate-50 text-slate-600 whitespace-normal text-center wrap-break-word hyphens-auto"
                           >
                             {item.typology}
                           </Badge>
                         </TableCell>
 
-                        <TableCell className="px-6 py-5 align-top text-center">
+                        <TableCell className="px-5 py-5 align-top text-center">
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-[10px] font-black uppercase text-slate-400">
                               {getTimelineLabel(item.start_year, item.end_year)}
                             </span>
-                            <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                            <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap">
                               {item.start_year} - {item.end_year}
                             </span>
                           </div>
                         </TableCell>
 
-                        <TableCell className="px-6 py-5 align-top text-center">
+                        <TableCell className="px-5 py-5 align-top text-center">
                           {ieaRel !== null ? (
                             <div className="inline-flex items-center justify-center min-w-12 py-1 rounded-md bg-emerald-50 text-emerald-700 font-mono font-bold text-sm border border-emerald-100 shadow-sm">
                               {formatDecimal(ieaRel)}
@@ -376,7 +374,7 @@ export default function MonitoramentoPage() {
                           )}
                         </TableCell>
 
-                        <TableCell className="px-6 py-5 align-top text-right">
+                        <TableCell className="px-5 py-5 align-top text-right">
                           <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
