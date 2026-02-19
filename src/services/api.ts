@@ -130,8 +130,9 @@ export const getMatriz = async (basinId?: number) => {
 // Custos (Financeiro)
 export const getCustos = async (basinId?: number) => {
   try {
-    const params = basinId ? { params: { basin_id: basinId } } : {};
-    const response = await api.get("/financeiro/custos", params);
+    const response = await api.get("/financeiro/custos", {
+      params: { basin_id: basinId },
+    });
     return response.data;
   } catch (error) {
     console.error("Erro ao buscar custos:", error);

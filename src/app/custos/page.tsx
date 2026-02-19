@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Removido useSearchParams, adicionado useReservoir
 import { useReservoir } from "@/context/ReservoirContext";
 import { getCustos } from "@/services/api";
 import {
@@ -17,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, Calendar, PieChart, Info } from "lucide-react";
 
 export default function CustosPage() {
-  // 1. Acesso ao Contexto Global em vez de ler a URL manualmente
   const { selectedReservoir } = useReservoir();
 
   const [data, setData] = useState<any[]>([]);
@@ -25,12 +23,10 @@ export default function CustosPage() {
 
   useEffect(() => {
     async function fetchData() {
-      // Só busca se houver um reservatório selecionado no contexto
       if (!selectedReservoir) return;
 
       setLoading(true);
       try {
-        // 2. Usa o ID dinâmico do reservatório selecionado
         const res = await getCustos(selectedReservoir.id);
         setData(res || []);
       } catch (error) {
@@ -40,9 +36,7 @@ export default function CustosPage() {
       }
     }
     fetchData();
-  }, [selectedReservoir]); // Recarrega sempre que o usuário trocar a bacia no seletor
-
-  // Função getBasinName removida pois agora usamos selectedReservoir.name
+  }, [selectedReservoir]);
 
   if (loading) {
     return (
@@ -66,7 +60,7 @@ export default function CustosPage() {
 
   return (
     <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
-      <div className="max-w-4xl mx-auto px-6 py-20 lg:py-32">
+      <div className="max-w-4xl mx-auto px-6 md:px-8 py-20 lg:py-32">
         {/* Header Editorial */}
         <header className="mb-20 space-y-10">
           <div className="flex items-center gap-4">
@@ -77,13 +71,12 @@ export default function CustosPage() {
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[0.95]">
+            <h1 className="text-4xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[0.95]">
               Custos do Plano
             </h1>
             <div className="flex items-center gap-2 text-slate-400 font-medium">
               <MapPin className="w-4 h-4 text-blue-500" />
               <span className="text-sm tracking-wide">
-                {/* 3. Nome dinâmico vindo da API/Contexto */}
                 {selectedReservoir?.name
                   ? `Região Hidrográfica do ${selectedReservoir.name}`
                   : "Carregando..."}
@@ -92,14 +85,14 @@ export default function CustosPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-slate-100">
-            <p className="text-sm text-slate-500 leading-relaxed text-justify">
+            <p className="text-slate-600 text-sm leading-relaxed text-justify max-w-xs lg:max-w-xl">
               O investimento necessário para a implementação dos Planos de Ação
               foi cuidadosamente estimado para garantir a execução das
               estratégias em cada eixo temático. Os valores refletem o
               compromisso com uma gestão hídrica eficiente, considerando
               infraestrutura, preservação e capacitação.
             </p>
-            <p className="text-sm text-slate-500 leading-relaxed text-justify">
+            <p className="text-slate-600 text-sm leading-relaxed text-justify max-w-xs lg:max-w-xl">
               O detalhamento por período e eixo garante transparência e apoia o
               planejamento estratégico para captação de recursos. Este somatório
               fornece uma visão clara dos aportes necessários ano a ano,
@@ -109,76 +102,84 @@ export default function CustosPage() {
         </header>
 
         {/* Sistema de Abas Editorial */}
-        <Tabs defaultValue="totais" className="space-y-8">
-          <TabsList className="bg-slate-50 p-1 rounded-full border border-slate-200">
-            <TabsTrigger
-              value="totais"
-              className="rounded-full px-8 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <PieChart className="w-4 h-4 mr-2" /> Visão por Eixo
-            </TabsTrigger>
-            <TabsTrigger
-              value="periodos"
-              className="rounded-full px-8 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Calendar className="w-4 h-4 mr-2" /> Cronograma Financeiro
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="totais" className="space-y-8 w-full">
+          {/* O overflow-x-auto permite rolar os botões das abas se a tela for muito pequena */}
+          <div className="overflow-x-auto w-full pb-2">
+            <TabsList className="bg-slate-50 p-1 rounded-full border border-slate-200 inline-flex min-w-max">
+              <TabsTrigger
+                value="totais"
+                className="rounded-full px-8 text-sm font-bold data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all"
+              >
+                <PieChart className="w-4 h-4 mr-2" /> Eixos
+              </TabsTrigger>
+              <TabsTrigger
+                value="periodos"
+                className="rounded-full px-8 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Calendar className="w-4 h-4 mr-2" /> Cronograma
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* ABA 1: CUSTOS TOTAIS */}
           <TabsContent
             value="totais"
             className="space-y-6 focus-visible:outline-none"
           >
-            <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
-              <Table>
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="py-6 px-6 font-bold text-slate-900">
-                      Eixo Temático
-                    </TableHead>
-                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-right">
-                      Valor Total
-                    </TableHead>
-                    <TableHead className="py-6 px-6 font-bold text-slate-900 text-center w-30">
-                      Percentual
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {custosEixos.map((item, idx) => (
-                    <TableRow key={idx} className="group hover:bg-blue-50/30">
-                      <TableCell className="py-6 px-6 font-semibold text-slate-700">
-                        {item.eixo}
-                      </TableCell>
-                      <TableCell className="py-6 px-6 text-right font-mono font-medium text-slate-900">
-                        {item.valor_total}
-                      </TableCell>
-                      <TableCell className="py-6 px-6 text-center">
-                        <Badge
-                          variant="secondary"
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none font-bold"
-                        >
-                          {(item.percentual * 100).toFixed(1)}%
-                        </Badge>
-                      </TableCell>
+            <div className="rounded-2xl border border-slate-200 shadow-sm bg-white flex flex-col w-full max-w-[calc(100vw-4rem)] md:max-w-full overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <Table className="w-full table-fixed min-w-[550px]">
+                  <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
+                    <TableRow>
+                      <TableHead className="w-[40%] py-6 px-6 font-bold text-slate-900">
+                        Eixo Temático
+                      </TableHead>
+                      <TableHead className="w-[40%] py-6 px-6 font-bold text-slate-900 text-right">
+                        Valor Total
+                      </TableHead>
+                      <TableHead className="w-[20%] py-6 px-6 font-bold text-slate-900 text-center">
+                        Percentual
+                      </TableHead>
                     </TableRow>
-                  ))}
-                  {totalGeral && (
-                    <TableRow className="bg-slate-900 hover:bg-slate-800">
-                      <TableCell className="py-8 px-6 font-bold text-white uppercase tracking-widest text-xs">
-                        Total Geral do Plano
-                      </TableCell>
-                      <TableCell className="py-8 px-6 text-right font-mono font-bold text-blue-400 text-xl">
-                        {totalGeral.valor_total}
-                      </TableCell>
-                      <TableCell className="py-8 px-6 text-center font-bold text-slate-400 text-sm">
-                        100%
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {custosEixos.map((item, idx) => (
+                      <TableRow
+                        key={idx}
+                        className="group hover:bg-blue-50/30 border-slate-100"
+                      >
+                        <TableCell className="py-6 px-6 font-semibold text-slate-700 whitespace-normal break-words hyphens-auto">
+                          {item.eixo}
+                        </TableCell>
+                        <TableCell className="py-6 px-6 text-right font-mono font-medium text-slate-900 whitespace-nowrap">
+                          {item.valor_total}
+                        </TableCell>
+                        <TableCell className="py-6 px-6 text-center">
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none font-bold"
+                          >
+                            {(item.percentual * 100).toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {totalGeral && (
+                      <TableRow className="bg-slate-900 hover:bg-slate-800">
+                        <TableCell className="py-8 px-6 font-bold text-white uppercase tracking-widest text-xs">
+                          Total Geral do Plano
+                        </TableCell>
+                        <TableCell className="py-8 px-6 text-right font-mono font-bold text-blue-400 text-xl whitespace-nowrap">
+                          {totalGeral.valor_total}
+                        </TableCell>
+                        <TableCell className="py-8 px-6 text-center font-bold text-slate-400 text-sm">
+                          100%
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
               <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -195,59 +196,66 @@ export default function CustosPage() {
             value="periodos"
             className="space-y-6 focus-visible:outline-none"
           >
-            <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm overflow-x-auto">
-              <Table className="min-w-200">
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="py-6 px-6 font-bold text-slate-900">
-                      Eixo
-                    </TableHead>
-                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
-                      2021-2025
-                    </TableHead>
-                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
-                      2025-2030
-                    </TableHead>
-                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
-                      2030-2035
-                    </TableHead>
-                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
-                      2035-2040
-                    </TableHead>
-                    <TableHead className="py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
-                      2040-2050
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {custosEixos.map((item, idx) => (
-                    <TableRow
-                      key={idx}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      <TableCell className="py-5 px-6 font-medium text-slate-800 text-sm">
-                        {item.eixo}
-                      </TableCell>
-                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
-                        {item.p2021_2025}
-                      </TableCell>
-                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
-                        {item.p2025_2030}
-                      </TableCell>
-                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
-                        {item.p2030_2035}
-                      </TableCell>
-                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
-                        {item.p2035_2040}
-                      </TableCell>
-                      <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600">
-                        {/* Simplificação para exibição: combinando os períodos finais se necessário */}
-                        {item.p2045_2050}
-                      </TableCell>
+            <div className="rounded-2xl border border-slate-200 shadow-sm bg-white flex flex-col w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <Table className="w-full table-fixed min-w-[850px]">
+                  <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
+                    <TableRow>
+                      <TableHead className="w-[30%] py-6 px-6 font-bold text-slate-900">
+                        Eixo
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2021-2025
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2025-2030
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2030-2035
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2035-2040
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2040-2045
+                      </TableHead>
+                      <TableHead className="w-[14%] py-6 px-4 font-bold text-slate-900 text-center text-xs uppercase tracking-tighter">
+                        2040-2050
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {custosEixos.map((item, idx) => (
+                      <TableRow
+                        key={idx}
+                        className="hover:bg-slate-50/50 transition-colors border-slate-100"
+                      >
+                        <TableCell className="py-5 px-6 font-medium text-slate-800 text-sm whitespace-normal wrap-break-word hyphens-auto">
+                          {item.eixo}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2021_2025}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2025_2030}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2030_2035}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2035_2040}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2040_2045}
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                          {item.p2045_2050}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
             <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-bold">
               Programação Plurianual — Valores sujeitos a correção monetária
@@ -256,7 +264,7 @@ export default function CustosPage() {
         </Tabs>
 
         {/* Footer Editorial */}
-        <footer className="mt-32 pt-12 border-t border-slate-200 flex flex-col items-center gap-6">
+        <footer className="mt-32 pt-12 border-t border-slate-200 flex flex-col items-center gap-6 w-full">
           <div className="w-2 h-2 rounded-full bg-sky-500" />
         </footer>
       </div>
