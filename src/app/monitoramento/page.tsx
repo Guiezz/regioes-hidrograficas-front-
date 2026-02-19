@@ -300,8 +300,8 @@ export default function MonitoramentoPage() {
 
         {/* Tabela com scroll responsivo */}
         <div className="rounded-xl border border-slate-200 shadow-xl shadow-slate-200/20 bg-white flex flex-col w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden mb-16">
-          <div className="overflow-x-auto overflow-y-auto max-h-[480px] w-full">
-            <Table className="w-full table-fixed min-w-[850px]">
+          <div className="overflow-x-auto overflow-y-auto max-h-120 w-full">
+            <Table className="w-full table-fixed min-w-212.5">
               <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
                 <TableRow className="border-slate-100">
                   <TableHead className="w-[35%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">

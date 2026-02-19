@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-// 1. Troca de useSearchParams para useReservoir
 import { useReservoir } from "@/context/ReservoirContext";
 import { getMatriz } from "@/services/api";
 import {
@@ -28,28 +27,29 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 5;
 
 export default function MatrizPage() {
-  // 2. Acesso ao Contexto Global
   const { selectedReservoir } = useReservoir();
 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Estados dos filtros
   const [filterTipo, setFilterTipo] = useState("all");
   const [filterPrograma, setFilterPrograma] = useState("all");
+
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function fetchData() {
-      // Só busca se houver um reservatório selecionado
       if (!selectedReservoir) return;
 
       setLoading(true);
       try {
-        // 3. Usa o ID dinâmico do reservatório selecionado
         const res = await getMatriz(selectedReservoir.id);
         setData(res || []);
       } catch (error) {
@@ -59,7 +59,7 @@ export default function MatrizPage() {
       }
     }
     fetchData();
-  }, [selectedReservoir]); // 4. Dependência atualizada
+  }, [selectedReservoir]);
 
   // Resetar página quando os filtros mudarem
   useEffect(() => {
@@ -89,7 +89,6 @@ export default function MatrizPage() {
     return matchTipo && matchProg;
   });
 
-  // Lógica de Paginação
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -103,6 +102,11 @@ export default function MatrizPage() {
     if (p.includes("méd") || p.includes("med"))
       return <Badge className="bg-amber-500 hover:bg-amber-600">Média</Badge>;
     return <Badge className="bg-emerald-500 hover:bg-emerald-600">Baixa</Badge>;
+  };
+
+  const clearFilters = () => {
+    setFilterTipo("all");
+    setFilterPrograma("all");
   };
 
   if (loading) {
@@ -153,19 +157,22 @@ export default function MatrizPage() {
         </header>
 
         {/* Filtros com padding adaptado para mobile */}
-        <section className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-4 md:p-8 rounded-2xl bg-slate-50 border border-slate-100 w-full">
-          <div className="space-y-3">
+        {/* Filtros */}
+        <section className="mb-12 mx-4 md:mx-0 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 border border-slate-100 w-[calc(100%-2rem)] md:w-full items-end">
+          {/* Filtro Tipo de Matriz */}
+          <div className="space-y-2 w-full overflow-hidden">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <Filter className="w-3 h-3" /> Tipo de Matriz
             </label>
-            <Select onValueChange={setFilterTipo} defaultValue="all">
-              <SelectTrigger className="bg-white border-slate-200">
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
+              {/* O [&>span]:truncate garante que o texto interno receba os "..." em vez de esticar o botão */}
+              <SelectTrigger className="bg-white border-slate-200 w-full h-10 [&>span]:truncate">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-[400px]">
                 <SelectItem value="all">Todos os Tipos</SelectItem>
                 {tiposMatriz.map((tipo) => (
-                  <SelectItem key={tipo} value={tipo}>
+                  <SelectItem key={tipo} value={tipo} className="truncate">
                     {tipo}
                   </SelectItem>
                 ))}
@@ -173,24 +180,34 @@ export default function MatrizPage() {
             </Select>
           </div>
 
-          <div className="space-y-3">
+          {/* Filtro Programa */}
+          <div className="space-y-2 w-full overflow-hidden">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <ClipboardList className="w-3 h-3" /> Programa
             </label>
-            <Select onValueChange={setFilterPrograma} defaultValue="all">
-              <SelectTrigger className="bg-white border-slate-200">
+            <Select value={filterPrograma} onValueChange={setFilterPrograma}>
+              <SelectTrigger className="bg-white border-slate-200 w-full h-10 [&>span]:truncate">
                 <SelectValue placeholder="Selecione o programa" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-[400px]">
                 <SelectItem value="all">Todos os Programas</SelectItem>
                 {programas.map((prog) => (
-                  <SelectItem key={prog} value={prog}>
+                  <SelectItem key={prog} value={prog} className="truncate">
                     {prog}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Botão de Limpar Filtros */}
+          <Button
+            variant="outline"
+            onClick={clearFilters}
+            className="w-full border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 h-10 uppercase text-[10px] font-bold tracking-widest mt-2 lg:mt-0"
+          >
+            <X className="w-3 h-3 mr-2" /> Limpar Filtros
+          </Button>
         </section>
 
         {/* Tabela com scroll responsivo travado na largura da tela */}
