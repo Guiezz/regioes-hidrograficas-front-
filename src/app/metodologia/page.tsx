@@ -146,15 +146,6 @@ export default function MetodologiaPage() {
                 <div className="flex flex-col gap-8">
                   {/* Título da Seção/Fase */}
                   <header className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-[10px] font-bold tracking-widest uppercase ${
-                          isLevel2 ? "text-sky-600" : "text-slate-400"
-                        }`}
-                      >
-                        Etapa {section.number}
-                      </span>
-                    </div>
                     <h2
                       className={`${
                         isLevel2

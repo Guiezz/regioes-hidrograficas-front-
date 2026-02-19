@@ -196,9 +196,6 @@ export default function BalancoPage() {
                               ) : (
                                 <ArrowRightLeft className="w-5 h-5 text-blue-500" />
                               )}
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                Ref. {child.number}
-                              </span>
                             </div>
                             <h3 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">
                               {child.title}

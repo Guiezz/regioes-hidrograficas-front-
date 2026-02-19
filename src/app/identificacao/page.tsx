@@ -130,12 +130,6 @@ export default function IdentificacaoPage() {
               <div className="grid grid-cols-1 gap-12">
                 {/* Título da Seção */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-white bg-blue-600 px-2 py-0.5 rounded transition-colors group-hover:bg-blue-900">
-                      {section.number}
-                    </span>
-                    <div className="h-px flex-1 bg-slate-100" />
-                  </div>
                   <h2 className="text-4xl font-bold text-slate-800 tracking-tight transition-colors group-hover:text-slate-900">
                     {section.title}
                   </h2>
@@ -157,8 +151,8 @@ export default function IdentificacaoPage() {
                     <div className="mt-4 flex items-start gap-3 px-2">
                       <Anchor className="w-4 h-4 text-sky-500 mt-1 shrink-0" />
                       <p className="text-[13px] text-slate-500 leading-snug font-medium italic">
-                        Figura {section.number} — {section.title}. Fonte: Acervo
-                        Técnico da Unidade de Gestão Hidrográfica.
+                        Figura - {section.title}. Fonte: Acervo Técnico da
+                        Unidade de Gestão Hidrográfica.
                       </p>
                     </div>
                   </div>

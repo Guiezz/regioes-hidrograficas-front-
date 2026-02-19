@@ -132,9 +132,6 @@ export default function InfraestruturaPage() {
                 <div className="flex flex-col gap-12">
                   {/* Título com Identidade Azul */}
                   <div className="space-y-2">
-                    <span className="text-xs font-black text-blue-500 tracking-[0.3em] uppercase">
-                      {section.number}
-                    </span>
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
                       {section.title}
                     </h2>
@@ -153,7 +150,7 @@ export default function InfraestruturaPage() {
                       />
                       <div className="absolute bottom-0 inset-x-0 p-4 bg-linear-to-t from-black/40 to-transparent">
                         <p className="text-[10px] text-white font-bold uppercase tracking-widest">
-                          Vista Técnica — Ref. {section.number}
+                          Vista Técnica
                         </p>
                       </div>
                     </div>

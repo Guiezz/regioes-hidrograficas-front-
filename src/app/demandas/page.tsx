@@ -182,12 +182,6 @@ export default function DemandasPage() {
                         <article key={child.id} className="group">
                           <div className="flex flex-col gap-10">
                             <header className="space-y-4">
-                              <div className="flex items-center gap-4">
-                                <span className="text-xs font-black text-blue-500 tracking-[0.3em] uppercase">
-                                  {child.number}
-                                </span>
-                                <div className="h-px flex-1 bg-slate-50" />
-                              </div>
                               <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
                                 {child.title}
                               </h3>
