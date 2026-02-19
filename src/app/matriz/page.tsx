@@ -120,9 +120,9 @@ export default function MatrizPage() {
 
   return (
     <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
-      <div className="max-w-4xl mx-auto px-6 py-20 lg:py-32">
+      <div className="max-w-4xl mx-auto px-0 md:px-8 py-20 lg:py-32">
         {/* Header Editorial */}
-        <header className="mb-20 space-y-10">
+        <header className="mb-20 px-4 space-y-10">
           <div className="flex items-center gap-4">
             <div className="h-px w-12 bg-sky-500" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-600">
@@ -145,15 +145,15 @@ export default function MatrizPage() {
             </div>
           </div>
 
-          <p className="text-xl text-slate-500 font-light leading-relaxed text-justify">
+          <p className="text-slate-600 text-sm leading-relaxed text-justify max-w-xs lg:max-w-xl">
             A matriz de ações define as prioridades operacionais para a gestão
             dos recursos hídricos, vinculando programas a ações específicas e
             seus responsáveis.
           </p>
         </header>
 
-        {/* Filtros */}
-        <section className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-6 p-8 rounded-2xl bg-slate-50 border border-slate-100">
+        {/* Filtros com padding adaptado para mobile */}
+        <section className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 p-4 md:p-8 rounded-2xl bg-slate-50 border border-slate-100 w-full">
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <Filter className="w-3 h-3" /> Tipo de Matriz
@@ -193,58 +193,63 @@ export default function MatrizPage() {
           </div>
         </section>
 
-        {/* Tabela */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm mb-6">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead className="py-6 font-bold text-slate-900">
-                  Ação Específica
-                </TableHead>
-                <TableHead className="py-6 font-bold text-slate-900">
-                  Responsáveis
-                </TableHead>
-                <TableHead className="py-6 font-bold text-slate-900 text-center w-[120px]">
-                  Prioridade
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item) => (
-                  <TableRow key={item.id} className="group hover:bg-blue-50/30">
-                    <TableCell className="py-6 align-top">
-                      <div className="space-y-1">
-                        <p className="text-[15px] font-semibold text-slate-800 leading-snug whitespace-normal break-words">
-                          {item.acoes_especificas}
+        {/* Tabela com scroll responsivo travado na largura da tela */}
+        <div className="rounded-2xl border border-slate-200 shadow-sm bg-white flex flex-col w-full max-w-[calc(100vw-2rem)] md:max-w-full overflow-hidden mb-6">
+          <div className="overflow-x-auto overflow-y-auto max-h-120 w-full">
+            <Table className="w-full table-fixed min-w-225">
+              <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
+                <TableRow className="border-slate-200">
+                  <TableHead className="w-[45%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Ação Específica
+                  </TableHead>
+                  <TableHead className="w-[35%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Responsáveis
+                  </TableHead>
+                  <TableHead className="w-[20%] py-4 px-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">
+                    Prioridade
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      className="group hover:bg-blue-50/30 border-slate-100"
+                    >
+                      <TableCell className="px-5 py-5 align-top">
+                        <div className="space-y-1">
+                          <p className="text-[15px] font-semibold text-slate-800 leading-snug whitespace-normal break-words hyphens-auto">
+                            {item.acoes_especificas}
+                          </p>
+                          <p className="text-[11px] text-blue-500 font-bold uppercase tracking-wider">
+                            {item.programa}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-5 py-5 align-top">
+                        <p className="text-sm text-slate-600 leading-relaxed whitespace-normal break-words hyphens-auto">
+                          {item.instituicoes_envolvidas}
                         </p>
-                        <p className="text-[11px] text-blue-500 font-bold uppercase tracking-wider">
-                          {item.programa}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-6 align-top">
-                      <p className="text-sm text-slate-600 leading-relaxed whitespace-normal break-words">
-                        {item.instituicoes_envolvidas}
-                      </p>
-                    </TableCell>
-                    <TableCell className="py-6 align-top text-center">
-                      {getPriorityBadge(item.prioridade)}
+                      </TableCell>
+                      <TableCell className="px-5 py-5 align-top text-center">
+                        {getPriorityBadge(item.prioridade)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="h-40 text-center text-slate-400 italic"
+                    >
+                      Nenhuma ação encontrada.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={3}
-                    className="h-40 text-center text-slate-400 italic"
-                  >
-                    Nenhuma ação encontrada.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {/* Controles de Paginação */}

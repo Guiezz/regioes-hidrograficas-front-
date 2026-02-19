@@ -300,8 +300,8 @@ export default function PlanosAcaoPage() {
         {/* Adicionamos w-full, overflow-hidden e um max-w rigoroso para mobile */}
         <div className="rounded-xl border border-slate-200 shadow-2xl shadow-slate-200/40 bg-white flex flex-col w-full max-w-[calc(100vw-3rem)] md:max-w-full overflow-hidden">
           {/* Área de scroll com w-full garantido */}
-          <div className="overflow-x-auto overflow-y-auto max-h-[480px] w-full">
-            <Table className="w-full table-fixed min-w-[1250px]">
+          <div className="overflow-x-auto overflow-y-auto max-h-120 w-full">
+            <Table className="w-full table-fixed min-w-321.5">
               {/* Header sticky dentro da área de scroll */}
               <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_#e2e8f0]">
                 <TableRow className="border-slate-200">
