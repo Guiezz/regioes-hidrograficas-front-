@@ -3,12 +3,44 @@ import axios from "axios";
 console.log("--- DEBUG DE AMBIENTE ---");
 console.log("Variável lida:", process.env.NEXT_PUBLIC_API_URL);
 console.log("Ambiente:", process.env.NODE_ENV);
+
 // 1. Configuração da instância do axios
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
 });
 
-// Interfaces
+// --- NOVAS INTERFACES PARA O PLANO FINANCEIRO ---
+
+export interface CustoVariavel {
+  descricao: string;
+  valorUnitario: number;
+}
+
+export interface PeriodoAcao {
+  intervalo: string;
+  custoFixo: number;
+  custosVariaveis: CustoVariavel[];
+}
+
+export interface EixoAcao {
+  eixo: string;
+  valorTotalProjetado: number;
+  percentual: number;
+  periodos: PeriodoAcao[];
+}
+
+export interface ResumoGeral {
+  valorTotalPrevisto: number;
+  percentual: number;
+}
+
+export interface PlanoAcaoResponse {
+  resumoGeral: ResumoGeral;
+  planoAcao: EixoAcao[];
+}
+
+// --- INTERFACES EXISTENTES ---
+
 export interface ActionPlan {
   id: number;
   description: string;
@@ -37,6 +69,11 @@ export interface Basin {
   Name: string;
 }
 
+export interface ReservoirData {
+  id: number;
+  name: string;
+}
+
 /**
  * Funções de Serviço
  */
@@ -51,13 +88,6 @@ export const getBasinById = async (id: string) => {
   return response.data;
 };
 
-export interface ReservoirData {
-  id: number;
-  name: string;
-  // Adicione outros campos que o backend retorna se necessário
-}
-
-// Busca as ações com filtros (usando a instância api)
 export async function getActions(basinId = 1, filters?: ActionsFilters) {
   try {
     const params: any = { basin_id: basinId };
@@ -69,7 +99,6 @@ export async function getActions(basinId = 1, filters?: ActionsFilters) {
       params.tipologia = filters.tipologia;
 
     const res = await api.get("/actions", { params });
-    // Ajuste conforme a estrutura de retorno do seu backend (responseData.data ou res.data)
     return res.data.data || res.data || [];
   } catch (error) {
     console.warn("Erro ao buscar ações:", error);
@@ -77,12 +106,8 @@ export async function getActions(basinId = 1, filters?: ActionsFilters) {
   }
 }
 
-// ... imports
-
-// Substitua a função getReservoirs antiga por esta:
 export const getReservoirs = async (): Promise<ReservoirData[]> => {
   try {
-    // Usa a instância 'api' (axios) para aproveitar a baseURL configurada
     const response = await api.get<ReservoirData[]>("/basins");
     return response.data;
   } catch (error) {
@@ -91,7 +116,6 @@ export const getReservoirs = async (): Promise<ReservoirData[]> => {
   }
 };
 
-// Dados do gráfico Radar
 export async function getRadarData(basinId = 1) {
   const res = await api.get("/dashboard/radar", {
     params: { basin_id: basinId },
@@ -99,7 +123,6 @@ export async function getRadarData(basinId = 1) {
   return res.data;
 }
 
-// Dados Consolidados (Cards)
 export async function getConsolidated(basinId = 1) {
   const res = await api.get("/dashboard/consolidated", {
     params: { basin_id: basinId },
@@ -107,36 +130,34 @@ export async function getConsolidated(basinId = 1) {
   return res.data;
 }
 
-// Conteúdo das Seções (Textos do plano)
 export async function getSections(basinId = 1) {
   const res = await api.get("/content", { params: { basin_id: basinId } });
   return res.data;
 }
 
-// Matriz de Ações (Financeiro)
-// No seu src/services/api.ts, atualize a função getMatriz:
-
 export const getMatriz = async (basinId?: number) => {
   try {
     const params = basinId ? { basin_id: basinId } : {};
     const response = await api.get("/financeiro/matriz", { params });
-
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error("Erro ao buscar matriz:", error);
     return [];
   }
 };
-// Custos (Financeiro)
-export const getCustos = async (basinId?: number) => {
+
+// Custos (Financeiro) - ATUALIZADO PARA O NOVO MODELO
+export const getCustos = async (
+  basinId?: number,
+): Promise<PlanoAcaoResponse | null> => {
   try {
-    const response = await api.get("/financeiro/custos", {
+    const response = await api.get<PlanoAcaoResponse>("/financeiro/custos", {
       params: { basin_id: basinId },
     });
     return response.data;
   } catch (error) {
     console.error("Erro ao buscar custos:", error);
-    return [];
+    return null;
   }
 };
 
